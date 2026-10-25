@@ -44,6 +44,13 @@ h3{font-size:14px;margin:10px 0 0}.mut{color:var(--mut);font-size:13px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sea:#1d2a33;--land:#2c2c28;--lb:#55534b}}
 :root[data-theme="dark"]{--sea:#1d2a33;--land:#2c2c28;--lb:#55534b}
 .next:disabled{opacity:.5;cursor:default}
+body:not(.in) main{display:none}
+#login{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+#login.hide{display:none}
+.lc{width:100%;max-width:340px;margin:0}.lc h2{margin:0 0 4px}
+.lc input{font:inherit;width:100%;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);margin:6px 0}
+.lc .next{margin-top:8px}
+.hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.hd h1{margin:0}.hd button{padding:6px 10px;font-size:13px}
 .leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-layer{position:absolute;left:0;top:0}
 .leaflet-container{overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent;cursor:crosshair}
 .leaflet-tile,.leaflet-marker-icon{user-select:none;-webkit-user-drag:none}
@@ -79,8 +86,10 @@ h3{font-size:14px;margin:10px 0 0}.mut{color:var(--mut);font-size:13px}
 .mbot .next{margin-top:0;padding:14px}
 #mat{align-self:flex-start;background:var(--card);padding:1px 6px;border-radius:6px;font-size:10px;color:var(--mut)}#mat:empty{display:none}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-</head><body><main>
-<h1>FC Code Trainer</h1>
+</head><body>
+<div id="login" class="hide"><form id="lf" class="card lc"><h2>FC Code Trainer</h2><p class="mut">Sign in with your account. Accounts are managed by the admin.</p><input type="text" id="lu" placeholder="Username" autocomplete="username" autocapitalize="off" autocorrect="off"><input type="password" id="lp" placeholder="Password" autocomplete="current-password"><button class="next" id="lgo" type="submit">Log in</button><div class="fb no" id="le"></div></form></div>
+<main>
+<div class="hd"><h1>FC Code Trainer</h1><span class="mut"><span id="who"></span> <button id="out">Log out</button></span></div>
 <div class="card">
  <div class="stats"><div><b id="sM">0</b><span>mastered</span></div><div><b id="sS">0</b><span>seen</span></div><div><b id="sA">–</b><span>accuracy</span></div><div><b id="sK">0</b><span>streak (best <span id="sB">0</span>)</span></div></div>
  <div class="bar" id="bar"></div>
@@ -108,7 +117,7 @@ h3{font-size:14px;margin:10px 0 0}.mut{color:var(--mut);font-size:13px}
  <div class="mbot">
   <div class="fbc hide" id="mnote"></div>
   <div id="mfb"></div>
-  <div class="mtools"><button data-l="o">Outline</button><button data-l="s">Street</button><button data-l="a">Satellite</button><select id="mf" aria-label="Country filter"></select><label><input type="checkbox" id="lb" checked> labels</label></div>
+  <div class="mtools"><button data-l="o">Outline</button><button data-l="s">Street</button><button data-l="e">English</button><button data-l="a">Satellite</button><select id="mf" aria-label="Country filter"></select><label><input type="checkbox" id="lb" checked> labels</label></div>
   <button class="next" id="mg" disabled>Tap the map to place a guess</button>
   <div id="mat"></div>
  </div>
@@ -121,6 +130,31 @@ h3{font-size:14px;margin:10px 0 0}.mut{color:var(--mut);font-size:13px}
 </section>
 </main>
 <script>
+(function(){
+const API='https://script.google.com/macros/s/AKfycbx9FYt89wWS2FbVsfiAGvlDAQlSicSoLqdh6m2xzpIbWH-UCQUesB6EsqmVUDGmdxwY/exec';
+const g=id=>document.getElementById(id);
+let s=null;try{s=JSON.parse(localStorage.getItem('fcs')||'null')}catch(e){}
+if(s&&s.u&&Date.now()-s.t<7*864e5){window.SES=s;document.body.classList.add('in');return}
+g('login').classList.remove('hide');
+g('lf').onsubmit=async e=>{
+ e.preventDefault();
+ const u=g('lu').value.trim(),p=g('lp').value,b=g('lgo'),er=g('le');
+ if(!u||!p){er.textContent='Enter your username and password.';return}
+ er.textContent='';b.disabled=true;b.textContent='Checking…';
+ try{
+  const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'login',username:u,password:p})});
+  const d=await r.json();
+  if(d&&d.ok){localStorage.setItem('fcs',JSON.stringify({u:d.user||u,t:Date.now()}));location.reload();return}
+  er.textContent=d&&d.error==='inactive'?'This account is inactive. Contact the admin.':'Wrong username or password.';
+ }catch(x){er.textContent='Could not reach the login server. Try again in a moment.'}
+ b.disabled=false;b.textContent='Log in';
+};
+})();
+</script>
+<script>
+if(window.SES){
+const KEY='fcp_'+window.SES.u.toLowerCase();
+try{if(!localStorage.getItem(KEY)&&localStorage.getItem('fcp'))localStorage.setItem(KEY,localStorage.getItem('fcp'))}catch(e){}
 const RAW=`BCN1|Barcelona|ES
 BCN3|Barcelona|ES
 BCN6|Barcelona|ES
@@ -295,8 +329,8 @@ const F=RAW.split('\n').map(l=>{const [c,city,cc,g]=l.split('|');return{c,city,c
 const $=s=>document.querySelector(s);
 const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 let S={p:{},best:0,tot:0,ok:0,streak:0};
-try{const x=JSON.parse(localStorage.getItem('fcp')||'null');if(x&&x.p)S=Object.assign(S,x)}catch(e){}
-const save=()=>{try{localStorage.setItem('fcp',JSON.stringify(S))}catch(e){}};
+try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.p)S=Object.assign(S,x)}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 S.m=S.m||{};S.ms=S.ms||{r:0,pts:0,d:0,best:0};
 const cls=c=>S.p[c]?'b'+S.p[c].b:'u';
 let mode='c2l',cf='all',last=null,cur=null,done=false;
@@ -399,8 +433,9 @@ const MAJ=[['London',51.51,-.13],['Paris',48.86,2.35],['Madrid',40.42,-3.7],['Be
 const MIN=[['Hamburg',53.55,9.99],['Munich',48.14,11.58],['Milan',45.46,9.19],['Barcelona',41.39,2.17],['Lyon',45.76,4.84],['Frankfurt',50.11,8.68],['Cologne',50.94,6.96],['Marseille',43.3,5.37],['Turin',45.07,7.69],['Brussels',50.85,4.35],['Amsterdam',52.37,4.9],['Zurich',47.38,8.54],['Bratislava',48.15,17.11],['Dresden',51.05,13.74],['Lille',50.63,3.06],['Bordeaux',44.84,-.58],['Bologna',44.49,11.34]];
 const HAS=typeof L!=='undefined';
 let map=null,gs=null,tr=null,mdone=false,mc=null,mlast=null,mf='all',base='o',gm=null,tm=null,lg=null,tl=null,tl2=null,tok=0,ter=0,landG=null,majG=null,minG=null;
-const TL={s:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}','Tiles © Esri, HERE, Garmin, OpenStreetMap contributors'],a:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Imagery © Esri, Maxar, Earthstar Geographics · place names © Esri']};
+const TL={s:['https://tile.openstreetmap.org/{z}/{x}/{y}.png','© OpenStreetMap contributors'],e:['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}','Tiles © Esri, HERE, Garmin, OpenStreetMap contributors'],a:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Imagery © Esri, Maxar, Earthstar Geographics · place names © Esri']};
 const REF='https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+const OV={a:REF,e:'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}'};
 const EU=[[36,-10],[60.5,25]];
 $('#mf').innerHTML=$('#cf').innerHTML;
 $('#mf').onchange=e=>{mf=e.target.value;mnext()};
@@ -423,18 +458,18 @@ function initMap(){
 }
 function lbls(){
  if(!map)return;
- if(base==='a'){if($('#lb').checked&&!tl2)tl2=L.tileLayer(REF,{maxZoom:18,zIndex:5}).addTo(map);else if(!$('#lb').checked&&tl2){map.removeLayer(tl2);tl2=null}}else if(tl2){map.removeLayer(tl2);tl2=null}
+ if(OV[base]){if($('#lb').checked&&!tl2)tl2=L.tileLayer(OV[base],{maxZoom:18,maxNativeZoom:16,zIndex:5}).addTo(map);else if(!$('#lb').checked&&tl2){map.removeLayer(tl2);tl2=null}}else if(tl2){map.removeLayer(tl2);tl2=null}
  const on=$('#lb').checked&&base==='o',z=map.getZoom();
  [[majG,on&&z>=3],[minG,on&&z>=5.5]].forEach(a=>{const h=map.hasLayer(a[0]);if(a[1]&&!h)a[0].addTo(map);if(!a[1]&&h)map.removeLayer(a[0])});
 }
 function setBase(b){
  if(!map)return;
- base=b;if(tl){map.removeLayer(tl);tl=null}
+ base=b;if(tl){map.removeLayer(tl);tl=null}if(tl2){map.removeLayer(tl2);tl2=null}
  document.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x.dataset.l===b));
  $('#mnote').classList.add('hide');$('#mat').textContent=b==='o'?'':TL[b][1];
  if(b==='o')landG.addTo(map);else map.removeLayer(landG);
  if(b!=='o'){
-  tok=0;ter=0;tl=L.tileLayer(TL[b][0],{maxZoom:18,maxNativeZoom:b==='a'?17:19});
+  tok=0;ter=0;tl=L.tileLayer(TL[b][0],{maxZoom:18,maxNativeZoom:{a:17,e:16}[b]||19});
   tl.on('tileload',()=>tok++);tl.on('tileerror',()=>ter++);tl.addTo(map);
   setTimeout(()=>{if(base===b&&!tok&&ter){setBase('o');$('#mnote').textContent='Street and satellite tiles could not load here (blocked or offline), so I switched to Outline.';$('#mnote').classList.remove('hide')}},2500);
  }
@@ -484,5 +519,7 @@ function mstats(){
  const cols=['var(--b5)','var(--b4)','var(--b3)','var(--b2)','var(--b1)','var(--b0)','var(--u)'];
  $('#mbar').innerHTML=[5,4,3,2,1,0,6].map((k,i)=>'<i style="width:'+(100*cnt[k]/F.length)+'%;background:'+cols[i]+'"></i>').join('');
 }
+$('#who').textContent=window.SES.u;$('#out').onclick=()=>{try{localStorage.removeItem('fcs')}catch(e){}location.reload()};
 stats();next();mstats();
+}
 </script></body></html>
