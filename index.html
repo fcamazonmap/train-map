@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FC Code Trainer</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#6b6a63;--bd:#dedcd3;--ac:#e8890c;--ok:#2e8b57;--no:#c0392b;--u:#e4e2d9;--b0:#e57368;--b1:#eea15a;--b2:#f0cf5a;--b3:#b6d869;--b4:#6cc08b;--b5:#2e8b57;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171716;--card:#232321;--tx:#efeee9;--mut:#a09f96;--bd:#3a3935;--u:#3a3935}}
+:root[data-theme="dark"]{--bg:#171716;--card:#232321;--tx:#efeee9;--mut:#a09f96;--bd:#3a3935;--u:#3a3935}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.stats b{display:block;font-size:20px}.stats span{font-size:12px;color:var(--mut)}
+.bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--u);margin:12px 0 6px}
+.bar i{display:block;height:100%}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--mut)}
+.legend em{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;font-style:normal}
+.tabs,.modes{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;cursor:pointer}
+button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+select{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px}
+.q{font-size:13px;color:var(--mut);margin-bottom:6px}
+.big{font-size:44px;font-weight:700;letter-spacing:2px;margin:4px 0 14px;word-break:break-word}
+.big.sm{font-size:26px;letter-spacing:0}
+.opts{display:grid;gap:8px}
+.opts button{text-align:left;padding:12px 14px;display:flex;justify-content:space-between;gap:8px}
+.opts small{color:var(--mut)}
+.opts button.right{background:var(--ok);border-color:var(--ok);color:#fff}.opts button.right small{color:#e6f5ec}
+.opts button.wrong{background:var(--no);border-color:var(--no);color:#fff}.opts button.wrong small{color:#fde}
+input[type=text]{font:inherit;width:100%;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);margin-bottom:8px}
+.fb{margin-top:12px;font-weight:600}.fb.ok{color:var(--ok)}.fb.no{color:var(--no)}
+.next{margin-top:10px;width:100%;background:var(--ac);border-color:var(--ac);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px}
+.chip{padding:5px 8px;border-radius:8px;font-size:13px;font-weight:600;color:#1d1d1b;border:0;background:var(--u)}
+:root:not([data-theme="light"]) .chip.u{color:var(--tx)}
+.chip.b0{background:var(--b0)}.chip.b1{background:var(--b1)}.chip.b2{background:var(--b2)}.chip.b3{background:var(--b3)}.chip.b4{background:var(--b4)}.chip.b5{background:var(--b5);color:#fff}
+.info{min-height:24px;font-weight:600;margin-bottom:10px}
+h3{font-size:14px;margin:10px 0 0}.mut{color:var(--mut);font-size:13px}
+.hide{display:none}
+:root{--sea:#cfe3ee;--land:#f1eee3;--lb:#b3ae9c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sea:#1d2a33;--land:#2c2c28;--lb:#55534b}}
+:root[data-theme="dark"]{--sea:#1d2a33;--land:#2c2c28;--lb:#55534b}
+.next:disabled{opacity:.5;cursor:default}
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent;cursor:crosshair}
+.leaflet-tile,.leaflet-marker-icon{user-select:none;-webkit-user-drag:none}
+.leaflet-tile{visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}
+.leaflet-container .leaflet-overlay-pane svg,.leaflet-container .leaflet-tile{max-width:none!important;max-height:none!important}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-zoom-anim .leaflet-tile,.leaflet-pan-anim .leaflet-tile{transition:none}
+.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}
+.leaflet-touch-drag{touch-action:pinch-zoom}.leaflet-touch-zoom{touch-action:pan-x pan-y}.leaflet-touch-drag.leaflet-touch-zoom{touch-action:none}
+.leaflet-pane>svg path,.leaflet-tile-container{pointer-events:none}
+.leaflet-pane>svg path.leaflet-interactive{pointer-events:auto}
+.land{fill:var(--land);fill-opacity:1;stroke:var(--lb);stroke-width:1}
+.lbl{white-space:nowrap;font-size:11px;font-weight:600;color:var(--mut);text-shadow:0 0 3px var(--sea),0 0 3px var(--sea)}
+.lbl i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--mut);margin:0 4px 1px -2px}
+#map:not(.hide){position:fixed;inset:0;z-index:50;background:var(--sea)}
+#lmap{position:absolute;inset:0;z-index:0;background:var(--sea)}
+.mtop,.mbot,.zb{position:absolute;z-index:1000}
+.mtop{left:8px;top:calc(8px + env(safe-area-inset-top,0px));width:calc(100% - 16px);max-width:480px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px}
+.mrow{display:flex;align-items:center;gap:10px}
+.mcode{font-size:28px;font-weight:700;letter-spacing:2px;flex:1}
+.mscore b{font-size:20px}.mscore span{font-size:11px;color:var(--mut);margin-left:3px}
+.ms{font-size:12px;color:var(--mut);gap:12px;margin-top:2px;flex-wrap:wrap}.ms b{color:var(--tx)}
+#mx{padding:6px 11px}
+.zb{right:8px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px}.zb button{padding:6px 14px;font-size:22px;line-height:1.2}
+.mbot{left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));width:calc(100% - 16px);max-width:520px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.mbot>*{pointer-events:auto}
+.fbc{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 12px}
+.mtools{display:flex;flex-wrap:wrap;gap:6px}
+.mtools button,.mtools select,.mtools label{padding:8px 11px;font-size:14px;border-radius:10px}
+.mtools label{background:var(--card);border:1px solid var(--bd)}
+.mbot .next{margin-top:0;padding:14px}
+#mat{align-self:flex-start;background:var(--card);padding:1px 6px;border-radius:6px;font-size:10px;color:var(--mut)}#mat:empty{display:none}
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+</head><body><main>
+<h1>FC Code Trainer</h1>
+<div class="card">
+ <div class="stats"><div><b id="sM">0</b><span>mastered</span></div><div><b id="sS">0</b><span>seen</span></div><div><b id="sA">–</b><span>accuracy</span></div><div><b id="sK">0</b><span>streak (best <span id="sB">0</span>)</span></div></div>
+ <div class="bar" id="bar"></div>
+ <div class="legend"><span><em style="background:var(--u)"></em>new</span><span><em style="background:var(--b0)"></em>missed</span><span><em style="background:var(--b1)"></em>1</span><span><em style="background:var(--b2)"></em>2</span><span><em style="background:var(--b3)"></em>3</span><span><em style="background:var(--b4)"></em>4</span><span><em style="background:var(--b5)"></em>5</span></div>
+ <div class="mut" style="margin-top:6px">Mastered = level 4 or higher. Each correct answer moves a code up a level; a miss sends it back.</div>
+</div>
+<div class="tabs"><button id="tPlay" class="on">Play</button><button id="tMap">Map</button><button id="tCodes">All codes</button></div>
+
+<section id="play">
+ <div class="modes">
+  <button data-m="c2l" class="on">Code → city</button><button data-m="l2c">City → code</button><button data-m="type">Type the city</button>
+  <select id="cf" aria-label="Country filter"></select>
+ </div>
+ <div class="card" id="qcard"></div>
+</section>
+
+<section id="map" class="hide">
+ <div id="lmap"></div>
+ <div class="mtop">
+  <div class="mrow"><button id="mx" aria-label="Exit map">✕</button><div class="mcode" id="mc"></div><div class="mscore"><b id="mP">0</b><span>pts</span></div></div>
+  <div class="mrow ms"><span><b id="mR">0</b> rounds</span><span><b id="mD">–</b> avg km</span><span><b id="mM">0</b> mastered</span><span>hit = within 50 km</span></div>
+  <div class="bar" id="mbar" style="margin:6px 0 0;height:8px"></div>
+ </div>
+ <div class="zb"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zh" aria-label="Reset view">⌂</button></div>
+ <div class="mbot">
+  <div class="fbc hide" id="mnote"></div>
+  <div id="mfb"></div>
+  <div class="mtools"><button data-l="o">Outline</button><button data-l="s">Street</button><button data-l="a">Satellite</button><select id="mf" aria-label="Country filter"></select><label><input type="checkbox" id="lb" checked> labels</label></div>
+  <button class="next" id="mg" disabled>Tap the map to place a guess</button>
+  <div id="mat"></div>
+ </div>
+</section>
+
+<section id="codes" class="hide">
+ <div class="info" id="info">Tap a code to reveal its location.</div>
+ <div id="list"></div>
+ <div style="margin-top:16px"><button id="reset">Reset progress</button></div>
+</section>
+</main>
+<script>
+const RAW=`BCN1|Barcelona|ES
+BCN3|Barcelona|ES
+BCN6|Barcelona|ES
+BCN8|Barcelona|ES
+BER8|Berlin|DE
+BGY1|Milano|IT
+BLQ1|Modena|IT
+BLQ8|Modena|IT
+BRE2|Bremen|DE
+BRE4|Bremen|DE
+BRQ2|Brno|CZ
+BTS2|Bratislava|SK
+BVA1|Beauvais|FR
+CDE9|Königs Wusterhausen|DE
+CDG7|Paris|FR
+CDG8|Paris|FR
+CFR9|Saint-Quentin-Fallavier|FR
+CGN1|Köln|DE
+DAC2|Morlaàs|FR
+DAC9|Bassens|FR
+DAO2|Woippy|FR
+DAO3|Fontaine|FR
+DBV1|Oerlenbach|DE
+DBW1|Mannheim|DE
+DBW5|Freiburg im Breisgau|DE
+DBW6|Sindelfingen|DE
+DBW8|Meßkirch|DE
+DBX8|Giengen an der Brenz|DE
+DBY2|München|DE
+DFV1|Fiume Veneto|IT
+DHE4|Friedrichsdorf|DE
+DHE6|Weiterstadt|DE
+DIF4|Le Blanc-Mesnil|FR
+DIF6|Tremblay-en-France area (Paris/CDG)|FR
+DMV3|Neubrandenburg|DE
+DNC1|Sainghin-en-Mélantois|FR
+DNC2|Avion|FR
+DNC3|Gauchy|FR
+DND1|Saint-Étienne-du-Rouvray|FR
+DNM4|Bremen|DE
+DNM7|Bremen|DE
+DNX5|Paderborn|DE
+DOQ8|Hörsching|AT
+DRP2|Neuwied|DE
+DRP6|Frankenthal (Pfalz)|DE
+DRQ1|Vitry-en-Artois area (Lens/Douai)|FR
+DSG1|Casteddu/Cagliari|IT
+DSH4|Schwerin|DE
+DSY1|Schkeuditz|DE
+DTH1|Thüringen|DE
+DTM1|Dortmund|DE
+DTM2|Dortmund|DE
+DTM3|Dortmund|DE
+DTM8|Dortmund|DE
+DTM9|Dortmund|DE
+DUS2|Düsseldorf|DE
+DUS4|Düsseldorf|DE
+DVN1|Vigonza|IT
+DWP1|Marseille|FR
+DWP2|Carros|FR
+ERF1|Erfurt|DE
+ETZ2|Augny|FR
+FCO1|Roma|IT
+FCO2|Roma|IT
+FCO9|Roma|IT
+FRA1|Bad Hersfeld|DE
+FRA3|Bad Hersfeld|DE
+FRA7|Frankfurt|DE
+FRAX|Frankfurt|DE
+HAJ1|Hannover|DE
+HAJ8|Hannover|DE
+HAM2|Hamburg|DE
+KSF7|Kassel|DE
+KTW3|Katowice|PL
+KTW5|Katowice|PL
+LCJ2|Łódź|PL
+LCJ3|Łódź|PL
+LCJ4|Łódź|PL
+LEJ1|Leipzig|DE
+LEJ3|Leipzig|DE
+LEJ5|Leipzig|DE
+LIL1|Lille|FR
+LIL8|Lille|FR
+LIN8|Milano|IT
+LYS1|Lyon|FR
+LYS8|Lyon|FR
+MAD4|San Fernando de Henares|ES
+MAD6|Illescas|ES
+MAD7|Illescas|ES
+MAD8|Madrid|ES
+MAD9|Alcalá de Henares|ES
+MHG9|Frankfurt|DE
+MRS1|Marseille|FR
+MRS9|Marseille|FR
+MUC3|München|DE
+MUC7|München|DE
+MXP3|Milano|IT
+MXP5|Milano|IT
+MXP6|Milano|IT
+NUE1|Gattendorf|DE
+NUE9|Nürnberg|DE
+ORY1|Orleans|FR
+ORY4|Orleans|FR
+OVD1|Oviedo|ES
+PAD1|Paderborn|DE
+PAD2|Paderborn|DE
+POZ1|Poznan|PL
+POZ2|Poznan|PL
+PRG2|Prague|CZ
+PRG9|Prague|CZ
+PSR2|Pescara|IT
+RMU1|Murcia|ES
+SCN2|Saarbrücken|DE
+SDEV|Kassel|DE
+STR1|Pforzheim|DE
+STR2|Pforzheim|DE
+SVQ1|Sevilla|ES
+SZZ1|Szczecin|PL
+TRN1|Torino|IT
+TRN3|Torino|IT
+WRO1|Wroclaw|PL
+WRO2|Wroclaw|PL
+WRO5|Wroclaw|PL
+XCR2|Denain|FR
+XDEQ|Kaiserslautern|DE
+XDR1|Dresden|DE
+XOR1|Paris|FR
+XOR4|Paris|FR
+XPO1|Poznan|PL
+ZAZ1|Zaragoza|ES
+XFRE|Lyon area (Saint-Quentin-Fallavier)|FR
+ONC1|Roissy/Louvres area (Paris)|FR
+OMU1|Augsburg area|DE
+XCD1|Combs-la-Ville|FR
+DAR2|Annecy|FR
+DMU5|München (Aschheim/Feldkirchen area)|DE
+DMU3|München (Moosburg area)|DE
+DMU2|München (Aying/Glonn area)|DE
+DMU1|München (Fürstenfeldbruck area)|DE
+HMU3|München (Ismaning/Garching area)|DE
+XOS1|Brebières|FR
+CGN9|Köln (Hürth/Wesseling area)|DE
+BER3|Brieselang|DE
+DAP8|Premstätten|AT
+GXO|Bristol/Avonmouth area|UK
+BCN2|Martorelles|ES
+FCO8|Fiano Romano|IT
+DBY8|Bayreuth|DE
+XAR1|Eskilstuna kommun|SE
+AOI1|Jesi|IT
+DVI3|Vienna|AT
+LYS2|Colombier-Saugnieu|FR
+RBCN|Barcelona|ES|1
+RBET|Bettembourg|LU|1
+RDOU|Dourges|FR|1
+RDUIS|Duisburg|DE|1
+RHAN|Hannover|DE|1
+RHOF|Hof|DE|1
+RKTW|Katowice|PL|1
+RLEJ|Leipzig|DE|1
+RLIL|Lille|FR|1
+RMAD|Madrid|ES|1
+RMAN|Mannheim|DE|1
+RMET|Metz|FR|1
+RNOV|Novara|IT|1
+RPRG|Prague|CZ|1
+RVEN|Venezia|IT|1
+RVER|Verona|IT|1
+RWRO|Wroclaw|PL|1`;
+const CN={LU:'Luxembourg',ES:'Spain',DE:'Germany',IT:'Italy',FR:'France',PL:'Poland',CZ:'Czech Republic',SK:'Slovakia',AT:'Austria',SE:'Sweden',UK:'United Kingdom'};
+const F=RAW.split('\n').map(l=>{const [c,city,cc,g]=l.split('|');return{c,city,cc,g,k:city.replace(/ ?\(.*\)/,'').replace(/ area$/,'')}});
+const $=s=>document.querySelector(s);
+const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let S={p:{},best:0,tot:0,ok:0,streak:0};
+try{const x=JSON.parse(localStorage.getItem('fcp')||'null');if(x&&x.p)S=Object.assign(S,x)}catch(e){}
+const save=()=>{try{localStorage.setItem('fcp',JSON.stringify(S))}catch(e){}};
+S.m=S.m||{};S.ms=S.ms||{r:0,pts:0,d:0,best:0};
+const cls=c=>S.p[c]?'b'+S.p[c].b:'u';
+let mode='c2l',cf='all',last=null,cur=null,done=false;
+
+function stats(){
+  const cnt=[0,0,0,0,0,0,0];let seen=0,mast=0;
+  F.forEach(f=>{const p=S.p[f.c];if(!p)cnt[6]++;else{cnt[p.b]++;seen++;if(p.b>=4)mast++}});
+  $('#sM').textContent=mast+'/'+F.length;$('#sS').textContent=seen;
+  $('#sA').textContent=S.tot?Math.round(100*S.ok/S.tot)+'%':'–';
+  $('#sK').textContent=S.streak;$('#sB').textContent=S.best;
+  const cols=['var(--b5)','var(--b4)','var(--b3)','var(--b2)','var(--b1)','var(--b0)','var(--u)'];
+  const order=[5,4,3,2,1,0,6];
+  $('#bar').innerHTML=order.map((k,i)=>'<i style="width:'+(100*cnt[k]/F.length)+'%;background:'+cols[i]+'"></i>').join('');
+}
+const pool=()=>F.filter(f=>cf==='all'||f.cc===cf);
+function pick(){
+  const W=[8,6,4,2,1,.5],p=pool().filter(f=>f.c!==last);
+  const w=p.map(f=>S.p[f.c]?W[S.p[f.c].b]:8);
+  let r=Math.random()*w.reduce((a,b)=>a+b,0);
+  for(let i=0;i<p.length;i++){r-=w[i];if(r<=0)return p[i]}
+  return p[p.length-1];
+}
+function distract(f,n){
+  const o=F.filter(x=>x.k!==f.k),same=sh(o.filter(x=>x.cc===f.cc)),diff=sh(o.filter(x=>x.cc!==f.cc));
+  const out=[],seen=new Set([f.k]);
+  for(const x of [...same.slice(0,Math.ceil(n*.7)*3),...diff]){if(out.length>=n)break;if(!seen.has(x.k)){seen.add(x.k);out.push(x)}}
+  return out;
+}
+const nz=s=>s.toLowerCase().replace(/ß/g,'ss').replace(/ł/g,'l').normalize('NFD').replace(/[^a-z]/g,'');
+const AL={munich:'munchen',muenchen:'munchen',milan:'milano',cologne:'koln',koeln:'koln',rome:'roma',turin:'torino',seville:'sevilla',nuremberg:'nurnberg',vienna:'vienna',prag:'prague',cagliari:'cagliari'};
+
+function next(){
+  cur=pick();last=cur.c;done=false;const f=cur,q=$('#qcard');
+  if(mode==='type'){
+    q.innerHTML='<div class="q">Which city is this facility in?</div><div class="big">'+f.c+'</div><input type="text" id="ti" autocomplete="off" autocapitalize="off" placeholder="City name"><button class="next" id="go" style="margin-top:0">Check</button><div id="fb"></div>';
+    const ti=$('#ti');ti.focus();
+    const chk=()=>{if(done||!ti.value.trim())return;const v=nz(ti.value),n=AL[v]||v;answer(f.k.split('/').map(nz).includes(n),null)};
+    $('#go').onclick=chk;ti.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done?next():chk()}};
+    return;
+  }
+  let opts,txt,prompt;
+  if(mode==='c2l'){
+    prompt='<div class="q">Where is this facility?</div><div class="big">'+f.c+'</div>';
+    opts=sh([{t:f.city,sub:'',ok:true},...distract(f,3).map(x=>({t:x.city,sub:'',ok:false}))]);
+  }else{
+    prompt='<div class="q">Which code is a facility in…</div><div class="big sm">'+f.k+', '+CN[f.cc]+'?</div>';
+    const ds=distract(f,3).map(x=>({t:x.c,sub:x.city,ok:false}));
+    opts=sh([{t:f.c,sub:f.city,ok:true},...ds]);
+  }
+  q.innerHTML=prompt+'<div class="opts">'+opts.map((o,i)=>'<button data-i="'+i+'"><span>'+o.t+'</span><small></small></button>').join('')+'</div><div id="fb"></div>';
+  const bs=[...q.querySelectorAll('.opts button')];
+  bs.forEach((b,i)=>b.onclick=()=>{
+    if(done)return;
+    bs.forEach((x,j)=>{if(opts[j].ok)x.classList.add('right');if(mode==='l2c')x.querySelector('small').textContent=opts[j].sub});
+    if(!opts[i].ok)b.classList.add('wrong');
+    answer(opts[i].ok,null);
+  });
+  cur._bs=bs;
+}
+function answer(ok,_){
+  done=true;const f=cur,p=S.p[f.c]||(S.p[f.c]={b:0,n:0,r:0});
+  p.n++;if(ok){p.r++;p.b=Math.min(5,p.b+1);S.ok++;S.streak++;S.best=Math.max(S.best,S.streak)}else{p.b=0;S.streak=0}
+  S.tot++;save();stats();
+  const full=f.c+' · '+f.city+', '+CN[f.cc]+(f.g?' (best guess)':'');
+  $('#fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+(ok?'Correct! ':'Not quite. ')+full+' <span class="mut">(level '+p.b+')</span></div><button class="next" id="nx">Next →</button>';
+  $('#nx').onclick=next;$('#nx').focus();
+  const ti=$('#ti');if(ti){ti.readOnly=true;$('#go').classList.add('hide')}
+}
+document.addEventListener('keydown',e=>{
+  if($('#play').classList.contains('hide'))return;
+  if(e.target.id==='ti')return;
+  if(done&&e.key==='Enter'){e.preventDefault();next();return}
+  if(!done&&cur&&cur._bs&&/^[1-4]$/.test(e.key))cur._bs[+e.key-1].click();
+});
+
+function list(){
+  const by={};F.forEach(f=>(by[f.cc]=by[f.cc]||[]).push(f));
+  $('#list').innerHTML=Object.keys(by).sort((a,b)=>CN[a].localeCompare(CN[b])).map(cc=>'<h3>'+CN[cc]+' <span class="mut">('+by[cc].length+')</span></h3><div class="chips">'+by[cc].sort((a,b)=>a.c.localeCompare(b.c)).map(f=>'<button class="chip '+cls(f.c)+'" data-c="'+f.c+'">'+f.c+'</button>').join('')+'</div>').join('');
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const f=F.find(x=>x.c===b.dataset.c);$('#info').textContent=f.c+' → '+f.city+', '+CN[f.cc]+(f.g?' (best guess)':'')});
+}
+function tab(t){
+  $('#play').classList.toggle('hide',t!=='play');$('#codes').classList.toggle('hide',t!=='codes');$('#map').classList.toggle('hide',t!=='map');$('#sM').closest('.card').classList.toggle('hide',t==='map');$('#tMap').classList.toggle('on',t==='map');
+  $('#tPlay').classList.toggle('on',t==='play');$('#tCodes').classList.toggle('on',t==='codes');
+  if(t==='codes')list();else if(t==='map')mapStart();else if(!done&&!cur)next();
+}
+$('#tPlay').onclick=()=>tab('play');$('#tCodes').onclick=()=>tab('codes');$('#tMap').onclick=()=>tab('map');
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));next()});
+const cc=[...new Set(F.map(f=>f.cc))].sort((a,b)=>CN[a].localeCompare(CN[b]));
+$('#cf').innerHTML='<option value="all">All countries ('+F.length+')</option>'+cc.map(c=>'<option value="'+c+'">'+CN[c]+' ('+F.filter(f=>f.cc===c).length+')</option>').join('');
+$('#cf').onchange=e=>{cf=e.target.value;next()};
+let armed=false;
+$('#reset').onclick=function(){
+  if(!armed){armed=true;this.textContent='Tap again to erase all progress';setTimeout(()=>{armed=false;this.textContent='Reset progress'},4000);return}
+  S={p:{},best:0,tot:0,ok:0,streak:0,m:{},ms:{r:0,pts:0,d:0,best:0}};save();stats();list();mstats();armed=false;this.textContent='Reset progress';
+};
+const CO={};`BCN1 41.31 2.08;BCN3 41.46 1.96;BCN6 41.46 1.96;BCN8 41.53 2.13;BER8 52.34 13.56;BGY1 45.53 9.84;BLQ1 45.03 11.57;BLQ8 44.55 11;BRE2 52.88 8.23;BRE4 53.02 9.06;BRQ2 49.34 17.31;BTS2 48.28 17.71;BVA1 49.86 2.4;CDE9 52.32 13.68;CDG7 49.21 2.62;CDG8 49.02 2.19;CFR9 45.66 5.12;CGN1 50.35 7.49;DAC2 43.33 -0.31;DAC9 44.9 -0.53;DAO2 49.16 6.16;DAO3 47.66 7.02;DBV1 50.15 10.15;DBW1 49.45 8.57;DBW5 48.04 7.81;DBW6 48.7 8.95;DBW8 47.99 9.09;DBX8 48.61 10.2;DBY2 48.44 10.87;DFV1 45.94 12.73;DHE4 50.26 8.66;DHE6 49.9 8.61;DIF4 48.95 2.46;DIF6 48.95 2.46;DMV3 53.58 13.29;DNC1 50.58 3.14;DNC2 50.39 2.83;DNC3 49.81 3.3;DND1 49.4 1.12;DNM4 53.36 7.16;DNM7 53.53 8.01;DNX5 51.69 8.72;DOQ8 48.21 14.17;DRP2 50.45 7.5;DRP6 49.55 8.35;DRQ1 50.4 2.98;DSG1 39.26 9.08;DSH4 54.35 9.69;DSY1 51.4 12.19;DTH1 51.04 11.03;DTM1 51.65 7.6;DTM2 51.53 7.5;DTM3 51.53 7.5;DTM8 51.33 6.69;DTM9 51.46 7.4;DUS2 51.54 6.59;DUS4 51.15 6.35;DVN1 45.44 11.94;DWP1 43.42 5.39;DWP2 43.78 7.21;ERF1 51.04 11.04;ETZ2 49.06 6.13;FCO1 42.17 12.64;FCO2 41.76 13.01;FCO9 42.14 12.59;FRA1 50.85 9.68;FRA3 50.85 9.73;FRA7 49.49 8.32;FRAX 49.76 8.48;HAJ1 52.28 10.93;HAJ8 52.42 9.57;HAM2 53.33 10.23;KSF7 51.4 9.2;KTW3 50.27 18.69;KTW5 49.94 18.41;LCJ2 51.62 19.36;LCJ3 51.7 19.49;LCJ4 51.7 19.49;LEJ1 51.36 12.45;LEJ3 52.06 11.55;LEJ5 50.95 12.12;LIL1 50.39 3.02;LIL8 50.39 3.02;LIN8 45.49 9.55;LYS1 46.74 4.85;LYS8 45.68 5.1;MAD4 40.45 -3.5;MAD6 40.09 -3.83;MAD7 40.11 -3.85;MAD8 40.28 -3.68;MAD9 40.51 -3.32;MHG9 50.03 9.05;MRS1 44.53 4.74;MRS9 43.62 4.78;MUC3 48.2 10.85;MUC7 48.31 11.88;MXP3 45.29 8.4;MXP5 45.08 9.45;MXP6 45.47 8.57;NUE1 50.35 11.97;NUE9 49.77 11.03;ORY1 47.96 1.85;ORY4 48.6 2.32;OVD1 43.39 -5.77;PAD1 51.84 8.2;PAD2 51.89 9.08;POZ1 52.45 16.71;POZ2 52.22 15.53;PRG2 50.11 14.22;PRG9 49.73 13.33;PSR2 42.05 14.76;RMU1 37.83 -1.1;SCN2 49.44 7.68;SDEV 51.52 9.9;STR1 48.92 8.72;STR2 48.69 10.24;SVQ1 37.27 -5.99;SZZ1 53.34 14.45;TRN1 45.24 7.98;TRN3 44.89 8.7;WRO1 51.04 16.94;WRO2 51.04 16.95;WRO5 51.27 15.79;XCR2 50.31 3.37;XDEQ 49.49 7.68;XDR1 51.17 15.02;XOR1 48.61 2.6;XOR4 49.95 2.22;XPO1 52.57 15.63;ZAZ1 41.63 -1.02;XFRE 45.67 5.12;ONC1 49.93 2.27;OMU1 48.29 10.89;XCD1 48.65 2.55;DAR2 45.88 6.08;DMU5 48.26 11.62;DMU3 48.47 11.96;DMU2 48.14 11.65;DMU1 48.23 11.34;HMU3 48.33 11.69;XOS1 50.34 3.03;CGN9 51.13 6.81;BER3 52.61 12.98;DAP8 46.96 15.44;GXO 51.55 -2.66;BCN2 41.53 2.23;FCO8 42.14 12.58;DBY8 49.97 11.61;XAR1 59.34 16.69;AOI1 43.56 13.3;DVI3 48.16 16.42;LYS2 45.7 5.08;RBCN 41.39 2.17;RBET 49.52 6.1;RDOU 50.43 2.97;RDUIS 51.43 6.76;RHAN 52.37 9.74;RHOF 50.31 11.92;RKTW 50.26 19.02;RLEJ 51.34 12.37;RLIL 50.63 3.06;RMAD 40.42 -3.7;RMAN 49.49 8.47;RMET 49.12 6.18;RNOV 45.45 8.62;RPRG 50.08 14.44;RVEN 45.44 12.32;RVER 45.44 10.99;RWRO 51.11 17.04`.split(';').forEach(s=>{const a=s.split(' ');CO[a[0]]=[+a[1],+a[2]]});
+const px=lo=>(lo+11)*20.1,py=la=>(61-la)*30,W0=784,H0=780;
+const LAND=['-5.6,36 -9,37 -8.8,38.8 -9.5,38.8 -8.9,41 -9.3,43 -8,43.8 -5,43.6 -1.8,43.4 -1.2,44.6 -1.2,46 -2.2,47.2 -4.5,47.8 -4.8,48.4 -3,48.8 -1.6,48.7 -1.3,49.7 0.2,49.4 1.6,50.2 2.5,51.1 3.5,51.4 4.5,52.5 5,53.2 7,53.5 8.5,53.6 8.6,55 8.1,56.6 10.5,57.7 10.3,56 9.9,55 10,54.5 11,54.2 12.5,54.4 14.2,53.9 16.5,54.5 18.5,54.8 19.8,54.4 21.2,55.2 21,57 24,57.2 24.4,58.4 28,59.5 29,59.5 29,42 26,40.9 24,40.3 22.8,40 22.8,38 24,37.7 23.2,36.4 21.7,36.8 21.2,38.3 20.2,39.7 19.4,40.4 19.5,41.8 18.5,42.5 17,43.2 15.5,44.2 14.5,45.2 13.7,45.7 12.3,45.3 12.4,44.2 13.6,43.5 14.5,42.3 16,41.9 18.5,40.1 17,39.5 16.5,38 15.7,38 16,39.8 15.7,40 14.8,40.7 13.7,41.2 12,41.9 11,42.4 10.3,43.6 9,44.3 7.6,43.8 6,43.1 4.5,43.4 3,43.3 3.1,42.4 3.2,41.9 1,41.1 0.5,40.5 -0.3,39.5 0.2,38.7 -0.7,37.6 -2,36.7 -4.4,36.7','5,61 5.5,58.8 7.5,58 9.5,58.9 10.7,59.5 11.2,58.9 11.8,58 12.8,56.5 14.3,55.5 16,56.2 16.7,57.6 16.5,59 17.5,59.7 18.9,59.9 17.4,61','21.3,61 21.8,60.5 23,59.9 25,60.2 28,60.5 29,60.5 29,61','-5.7,50.1 -3.5,50.3 -1,50.8 1.4,51.2 1.7,52.6 0.4,53 -0.2,54.1 -1.5,55 -2,55.9 -3,56.2 -2,57.5 -4,57.6 -3.3,58.6 -5,58.6 -6.2,57.5 -5.5,56 -5,55.3 -3,54.9 -3.2,53.4 -4.5,53.3 -4.2,52.8 -4.1,52 -5.2,51.8 -3,51.4 -4.5,51','-10,51.8 -6.2,52.2 -6,53.5 -5.9,54.6 -7.3,55.3 -9,54.3 -10,53.5','8.2,41 9.7,41 9.6,39.2 8.6,38.9 8.4,40','8.6,42.6 9.4,43 9.5,41.4 8.8,41.6','12.4,38 15.6,38.3 15.1,36.7 12.6,37.6','11.2,55.7 12,55.2 12.6,55.7 12,56','2.4,39.6 3.4,39.8 3.1,39.3 2.5,39.4'];
+const MAJ=[['London',51.51,-.13],['Paris',48.86,2.35],['Madrid',40.42,-3.7],['Berlin',52.52,13.4],['Rome',41.9,12.5],['Vienna',48.21,16.37],['Warsaw',52.23,21.01],['Prague',50.08,14.44],['Stockholm',59.33,18.07]];
+const MIN=[['Hamburg',53.55,9.99],['Munich',48.14,11.58],['Milan',45.46,9.19],['Barcelona',41.39,2.17],['Lyon',45.76,4.84],['Frankfurt',50.11,8.68],['Cologne',50.94,6.96],['Marseille',43.3,5.37],['Turin',45.07,7.69],['Brussels',50.85,4.35],['Amsterdam',52.37,4.9],['Zurich',47.38,8.54],['Bratislava',48.15,17.11],['Dresden',51.05,13.74],['Lille',50.63,3.06],['Bordeaux',44.84,-.58],['Bologna',44.49,11.34]];
+const HAS=typeof L!=='undefined';
+let map=null,gs=null,tr=null,mdone=false,mc=null,mlast=null,mf='all',base='o',gm=null,tm=null,lg=null,tl=null,tok=0,ter=0,landG=null,majG=null,minG=null;
+const TL={s:['https://tile.openstreetmap.org/{z}/{x}/{y}.png','© OpenStreetMap contributors'],a:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Imagery © Esri, Maxar, Earthstar Geographics']};
+const EU=[[36,-10],[60.5,25]];
+$('#mf').innerHTML=$('#cf').innerHTML;
+$('#mf').onchange=e=>{mf=e.target.value;mnext()};
+$('#lb').onchange=()=>lbls();
+$('#mx').onclick=()=>tab('play');
+document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>setBase(b.dataset.l));
+$('#zi').onclick=()=>map&&map.zoomIn();
+$('#zo').onclick=()=>map&&map.zoomOut();
+$('#zh').onclick=()=>map&&map.fitBounds(EU);
+function initMap(){
+ if(map||!HAS)return;
+ map=L.map('lmap',{zoomControl:false,attributionControl:false,minZoom:3,maxZoom:18,zoomSnap:.5,zoomDelta:.5});
+ landG=L.layerGroup(LAND.map(s=>L.polygon(s.split(' ').map(p=>{const a=p.split(',');return[+a[1],+a[0]]}),{className:'land',interactive:false})));
+ const mk=a=>L.layerGroup(a.map(c=>L.marker([c[1],c[2]],{icon:L.divIcon({className:'lbl',html:'<i></i>'+c[0],iconSize:[0,0]}),interactive:false,keyboard:false})));
+ majG=mk(MAJ);minG=mk(MIN);
+ map.on('zoomend',lbls);
+ map.on('click',e=>{if(!mc||mdone)return;gs=[e.latlng.lat,e.latlng.lng];draw();$('#mg').disabled=false;$('#mg').textContent='Lock in guess'});
+ map.fitBounds(EU);
+ setBase('s');
+}
+function lbls(){
+ if(!map)return;
+ const on=$('#lb').checked&&base==='o',z=map.getZoom();
+ [[majG,on&&z>=3],[minG,on&&z>=5.5]].forEach(a=>{const h=map.hasLayer(a[0]);if(a[1]&&!h)a[0].addTo(map);if(!a[1]&&h)map.removeLayer(a[0])});
+}
+function setBase(b){
+ if(!map)return;
+ base=b;if(tl){map.removeLayer(tl);tl=null}
+ document.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x.dataset.l===b));
+ $('#mnote').classList.add('hide');$('#mat').textContent=b==='o'?'':TL[b][1];
+ if(b==='o')landG.addTo(map);else map.removeLayer(landG);
+ if(b!=='o'){
+  tok=0;ter=0;tl=L.tileLayer(TL[b][0],{maxZoom:18,maxNativeZoom:b==='a'?17:19});
+  tl.on('tileload',()=>tok++);tl.on('tileerror',()=>ter++);tl.addTo(map);
+  setTimeout(()=>{if(base===b&&!tok&&ter){setBase('o');$('#mnote').textContent='Street and satellite tiles could not load here (blocked or offline), so I switched to Outline.';$('#mnote').classList.remove('hide')}},2500);
+ }
+ lbls();
+}
+function draw(){
+ [gm,tm,lg].forEach(x=>x&&map.removeLayer(x));gm=tm=lg=null;
+ if(!map)return;
+ const o={color:'#fff',weight:2,fillOpacity:1,radius:9,interactive:false};
+ if(gs)gm=L.circleMarker(gs,Object.assign({fillColor:'#e8890c'},o)).addTo(map);
+ if(tr){lg=L.polyline([gs,tr],{color:'#ffd400',weight:3,dashArray:'8 6',interactive:false}).addTo(map);tm=L.circleMarker(tr,Object.assign({fillColor:'#2e8b57'},o)).addTo(map)}
+}
+function hav(a,b){const R=6371,t=x=>x*Math.PI/180,dl=t(b[0]-a[0]),dn=t(b[1]-a[1]),h=Math.sin(dl/2)**2+Math.cos(t(a[0]))*Math.cos(t(b[0]))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+function mapStart(){
+ if(!HAS){$('#mfb').innerHTML='<div class="fbc">The map library could not load. Check your connection and reload.</div>';return}
+ initMap();map.invalidateSize();
+ if(!mc)mnext();else if(!mdone)map.fitBounds(EU,{animate:false});
+}
+function mnext(){
+ const Wt=[8,6,4,2,1,.5],p=F.filter(f=>(mf==='all'||f.cc===mf)&&f.c!==mlast);
+ const w=p.map(f=>S.m[f.c]?Wt[S.m[f.c].b]:8);let r=Math.random()*w.reduce((a,b)=>a+b,0),f=p[p.length-1];
+ for(let i=0;i<p.length;i++){r-=w[i];if(r<=0){f=p[i];break}}
+ mc=f;mlast=f.c;gs=null;tr=null;mdone=false;draw();
+ $('#mc').textContent=f.c;$('#mfb').innerHTML='';$('#mg').disabled=true;$('#mg').textContent='Tap the map to place a guess';
+ if(map)map.fitBounds(EU,{animate:false});
+}
+function mlock(){
+ const f=mc;tr=CO[f.c];mdone=true;
+ const d=hav(gs,tr),pts=Math.round(5000*Math.exp(-d/400)),hit=d<=50,p=S.m[f.c]||(S.m[f.c]={b:0,n:0,r:0});
+ p.n++;if(hit){p.r++;p.b=Math.min(5,p.b+1)}else p.b=0;
+ S.ms.r++;S.ms.pts+=pts;S.ms.d+=d;S.ms.best=Math.max(S.ms.best,pts);save();mstats();
+ $('#mfb').innerHTML='<div class="fbc"><div class="fb '+(hit?'ok':'no')+'" style="margin:0">'+(hit?'Hit! ':'Miss. ')+(d<10?d.toFixed(1):Math.round(d))+' km away · +'+pts.toLocaleString()+' points</div><div class="mut">'+f.c+' · '+f.city+', '+CN[f.cc]+(f.g?' (best guess)':'')+' · map level '+p.b+'</div></div>';
+ draw();
+ map.fitBounds(L.latLngBounds([gs,tr]),{paddingTopLeft:[40,150],paddingBottomRight:[40,230],maxZoom:11});
+ $('#mg').disabled=false;$('#mg').textContent='Next →';
+}
+$('#mg').onclick=()=>{if(mdone)mnext();else if(gs)mlock()};
+document.addEventListener('keydown',e=>{
+ if($('#map').classList.contains('hide'))return;
+ if(e.key==='Escape')tab('play');
+ else if(e.key==='Enter'&&!$('#mg').disabled){e.preventDefault();$('#mg').click()}
+});
+function mstats(){
+ const cnt=[0,0,0,0,0,0,0];let m=0;
+ F.forEach(f=>{const p=S.m[f.c];if(!p)cnt[6]++;else{cnt[p.b]++;if(p.b>=4)m++}});
+ $('#mM').textContent=m+'/'+F.length;$('#mP').textContent=S.ms.pts.toLocaleString();$('#mR').textContent=S.ms.r;$('#mD').textContent=S.ms.r?Math.round(S.ms.d/S.ms.r):'–';
+ const cols=['var(--b5)','var(--b4)','var(--b3)','var(--b2)','var(--b1)','var(--b0)','var(--u)'];
+ $('#mbar').innerHTML=[5,4,3,2,1,0,6].map((k,i)=>'<i style="width:'+(100*cnt[k]/F.length)+'%;background:'+cols[i]+'"></i>').join('');
+}
+stats();next();mstats();
+</script></body></html>
