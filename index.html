@@ -108,7 +108,7 @@ h3{font-size:14px;margin:10px 0 0}.mut{color:var(--mut);font-size:13px}
  <div class="mbot">
   <div class="fbc hide" id="mnote"></div>
   <div id="mfb"></div>
-  <div class="mtools"><button data-l="o">Outline</button><button data-l="s">Street</button><button data-l="a">Satellite</button><select id="mf" aria-label="Country filter"></select><label><input type="checkbox" id="lb" checked> labels</label></div>
+  <div class="mtools"><button data-l="o">Outline</button><button data-l="s">Street</button><button data-l="e">English</button><button data-l="a">Satellite</button><select id="mf" aria-label="Country filter"></select><label><input type="checkbox" id="lb" checked> labels</label></div>
   <button class="next" id="mg" disabled>Tap the map to place a guess</button>
   <div id="mat"></div>
  </div>
@@ -399,8 +399,9 @@ const MAJ=[['London',51.51,-.13],['Paris',48.86,2.35],['Madrid',40.42,-3.7],['Be
 const MIN=[['Hamburg',53.55,9.99],['Munich',48.14,11.58],['Milan',45.46,9.19],['Barcelona',41.39,2.17],['Lyon',45.76,4.84],['Frankfurt',50.11,8.68],['Cologne',50.94,6.96],['Marseille',43.3,5.37],['Turin',45.07,7.69],['Brussels',50.85,4.35],['Amsterdam',52.37,4.9],['Zurich',47.38,8.54],['Bratislava',48.15,17.11],['Dresden',51.05,13.74],['Lille',50.63,3.06],['Bordeaux',44.84,-.58],['Bologna',44.49,11.34]];
 const HAS=typeof L!=='undefined';
 let map=null,gs=null,tr=null,mdone=false,mc=null,mlast=null,mf='all',base='o',gm=null,tm=null,lg=null,tl=null,tl2=null,tok=0,ter=0,landG=null,majG=null,minG=null;
-const TL={s:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}','Tiles © Esri, HERE, Garmin, OpenStreetMap contributors'],a:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Imagery © Esri, Maxar, Earthstar Geographics · place names © Esri']};
+const TL={s:['https://tile.openstreetmap.org/{z}/{x}/{y}.png','© OpenStreetMap contributors'],e:['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}','Tiles © Esri, HERE, Garmin, OpenStreetMap contributors'],a:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Imagery © Esri, Maxar, Earthstar Geographics · place names © Esri']};
 const REF='https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+const OV={a:REF,e:'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}'};
 const EU=[[36,-10],[60.5,25]];
 $('#mf').innerHTML=$('#cf').innerHTML;
 $('#mf').onchange=e=>{mf=e.target.value;mnext()};
@@ -423,18 +424,18 @@ function initMap(){
 }
 function lbls(){
  if(!map)return;
- if(base==='a'){if($('#lb').checked&&!tl2)tl2=L.tileLayer(REF,{maxZoom:18,zIndex:5}).addTo(map);else if(!$('#lb').checked&&tl2){map.removeLayer(tl2);tl2=null}}else if(tl2){map.removeLayer(tl2);tl2=null}
+ if(OV[base]){if($('#lb').checked&&!tl2)tl2=L.tileLayer(OV[base],{maxZoom:18,maxNativeZoom:16,zIndex:5}).addTo(map);else if(!$('#lb').checked&&tl2){map.removeLayer(tl2);tl2=null}}else if(tl2){map.removeLayer(tl2);tl2=null}
  const on=$('#lb').checked&&base==='o',z=map.getZoom();
  [[majG,on&&z>=3],[minG,on&&z>=5.5]].forEach(a=>{const h=map.hasLayer(a[0]);if(a[1]&&!h)a[0].addTo(map);if(!a[1]&&h)map.removeLayer(a[0])});
 }
 function setBase(b){
  if(!map)return;
- base=b;if(tl){map.removeLayer(tl);tl=null}
+ base=b;if(tl){map.removeLayer(tl);tl=null}if(tl2){map.removeLayer(tl2);tl2=null}
  document.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x.dataset.l===b));
  $('#mnote').classList.add('hide');$('#mat').textContent=b==='o'?'':TL[b][1];
  if(b==='o')landG.addTo(map);else map.removeLayer(landG);
  if(b!=='o'){
-  tok=0;ter=0;tl=L.tileLayer(TL[b][0],{maxZoom:18,maxNativeZoom:b==='a'?17:19});
+  tok=0;ter=0;tl=L.tileLayer(TL[b][0],{maxZoom:18,maxNativeZoom:{a:17,e:16}[b]||19});
   tl.on('tileload',()=>tok++);tl.on('tileerror',()=>ter++);tl.addTo(map);
   setTimeout(()=>{if(base===b&&!tok&&ter){setBase('o');$('#mnote').textContent='Street and satellite tiles could not load here (blocked or offline), so I switched to Outline.';$('#mnote').classList.remove('hide')}},2500);
  }
