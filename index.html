@@ -398,8 +398,9 @@ const LAND=['-5.6,36 -9,37 -8.8,38.8 -9.5,38.8 -8.9,41 -9.3,43 -8,43.8 -5,43.6 -
 const MAJ=[['London',51.51,-.13],['Paris',48.86,2.35],['Madrid',40.42,-3.7],['Berlin',52.52,13.4],['Rome',41.9,12.5],['Vienna',48.21,16.37],['Warsaw',52.23,21.01],['Prague',50.08,14.44],['Stockholm',59.33,18.07]];
 const MIN=[['Hamburg',53.55,9.99],['Munich',48.14,11.58],['Milan',45.46,9.19],['Barcelona',41.39,2.17],['Lyon',45.76,4.84],['Frankfurt',50.11,8.68],['Cologne',50.94,6.96],['Marseille',43.3,5.37],['Turin',45.07,7.69],['Brussels',50.85,4.35],['Amsterdam',52.37,4.9],['Zurich',47.38,8.54],['Bratislava',48.15,17.11],['Dresden',51.05,13.74],['Lille',50.63,3.06],['Bordeaux',44.84,-.58],['Bologna',44.49,11.34]];
 const HAS=typeof L!=='undefined';
-let map=null,gs=null,tr=null,mdone=false,mc=null,mlast=null,mf='all',base='o',gm=null,tm=null,lg=null,tl=null,tok=0,ter=0,landG=null,majG=null,minG=null;
-const TL={s:['https://tile.openstreetmap.org/{z}/{x}/{y}.png','© OpenStreetMap contributors'],a:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Imagery © Esri, Maxar, Earthstar Geographics']};
+let map=null,gs=null,tr=null,mdone=false,mc=null,mlast=null,mf='all',base='o',gm=null,tm=null,lg=null,tl=null,tl2=null,tok=0,ter=0,landG=null,majG=null,minG=null;
+const TL={s:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}','Tiles © Esri, HERE, Garmin, OpenStreetMap contributors'],a:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Imagery © Esri, Maxar, Earthstar Geographics · place names © Esri']};
+const REF='https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
 const EU=[[36,-10],[60.5,25]];
 $('#mf').innerHTML=$('#cf').innerHTML;
 $('#mf').onchange=e=>{mf=e.target.value;mnext()};
@@ -422,6 +423,7 @@ function initMap(){
 }
 function lbls(){
  if(!map)return;
+ if(base==='a'){if($('#lb').checked&&!tl2)tl2=L.tileLayer(REF,{maxZoom:18,zIndex:5}).addTo(map);else if(!$('#lb').checked&&tl2){map.removeLayer(tl2);tl2=null}}else if(tl2){map.removeLayer(tl2);tl2=null}
  const on=$('#lb').checked&&base==='o',z=map.getZoom();
  [[majG,on&&z>=3],[minG,on&&z>=5.5]].forEach(a=>{const h=map.hasLayer(a[0]);if(a[1]&&!h)a[0].addTo(map);if(!a[1]&&h)map.removeLayer(a[0])});
 }
