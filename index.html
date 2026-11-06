@@ -324,6 +324,7 @@ RPRG|Prague|CZ|1
 RVEN|Venezia|IT|1
 RVER|Verona|IT|1
 RWRO|Wroclaw|PL|1`;
+const U=['HBE1','HBW2','HVX6','RBAI','RLBO','RLG1','RSWR','XESA','XESB'];
 const CN={LU:'Luxembourg',ES:'Spain',DE:'Germany',IT:'Italy',FR:'France',PL:'Poland',CZ:'Czech Republic',SK:'Slovakia',AT:'Austria',SE:'Sweden',UK:'United Kingdom'};
 const F=RAW.split('\n').map(l=>{const [c,city,cc,g]=l.split('|');return{c,city,cc,g,k:city.replace(/ ?\(.*\)/,'').replace(/ area$/,'')}});
 const $=s=>document.querySelector(s);
@@ -409,7 +410,8 @@ document.addEventListener('keydown',e=>{
 function list(){
   const by={};F.forEach(f=>(by[f.cc]=by[f.cc]||[]).push(f));
   $('#list').innerHTML=Object.keys(by).sort((a,b)=>CN[a].localeCompare(CN[b])).map(cc=>'<h3>'+CN[cc]+' <span class="mut">('+by[cc].length+')</span></h3><div class="chips">'+by[cc].sort((a,b)=>a.c.localeCompare(b.c)).map(f=>'<button class="chip '+cls(f.c)+'" data-c="'+f.c+'">'+f.c+'</button>').join('')+'</div>').join('');
-  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const f=F.find(x=>x.c===b.dataset.c);$('#info').textContent=f.c+' → '+f.city+', '+CN[f.cc]+(f.g?' (best guess)':'')});
+  $('#list').insertAdjacentHTML('beforeend','<h3>Location not set yet <span class="mut">('+U.length+')</span></h3><div class="chips">'+U.map(c=>'<button class="chip u" data-c="'+c+'">'+c+'</button>').join('')+'</div>');
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const f=F.find(x=>x.c===b.dataset.c);if(!f){$('#info').textContent=b.dataset.c+' → location not set yet';return}$('#info').textContent=f.c+' → '+f.city+', '+CN[f.cc]+(f.g?' (best guess)':'')});
 }
 function tab(t){
   $('#play').classList.toggle('hide',t!=='play');$('#codes').classList.toggle('hide',t!=='codes');$('#map').classList.toggle('hide',t!=='map');$('#sM').closest('.card').classList.toggle('hide',t==='map');$('#tMap').classList.toggle('on',t==='map');
