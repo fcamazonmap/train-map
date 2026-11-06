@@ -2,6 +2,9 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FC Code Trainer</title>
+<meta name="theme-color" content="#e8890c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
 :root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#6b6a63;--bd:#dedcd3;--ac:#e8890c;--ok:#2e8b57;--no:#c0392b;--u:#e4e2d9;--b0:#e57368;--b1:#eea15a;--b2:#f0cf5a;--b3:#b6d869;--b4:#6cc08b;--b5:#2e8b57;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171716;--card:#232321;--tx:#efeee9;--mut:#a09f96;--bd:#3a3935;--u:#3a3935}}
@@ -85,6 +88,20 @@ body:not(.in) main{display:none}
 .mtools label{background:var(--card);border:1px solid var(--bd)}
 .mbot .next{margin-top:0;padding:14px}
 #mat{align-self:flex-start;background:var(--card);padding:1px 6px;border-radius:6px;font-size:10px;color:var(--mut)}#mat:empty{display:none}
+main{padding-bottom:96px}
+button{touch-action:manipulation}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;margin:0;gap:0;flex-wrap:nowrap;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs button{flex:1;border:0;border-radius:0;padding:16px 4px;font-size:16px;background:transparent}
+.tabs button.on{background:transparent;color:var(--ac);font-weight:700;box-shadow:inset 0 3px 0 var(--ac)}
+.chips2{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips2::-webkit-scrollbar{display:none}
+.chips2 button{flex:none;white-space:nowrap;padding:10px 14px}
+.hud{font-weight:600;color:var(--mut);margin:2px 2px 8px;min-height:20px}
+.opts button{min-height:56px;font-size:17px}
+.next{min-height:52px;font-size:17px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.two button{min-height:56px;font-size:17px}
+#play select{width:100%;margin-bottom:8px;padding:12px}
+@media (max-width:480px){.big{font-size:38px}.stats b{font-size:18px}main{padding:12px 12px 96px}}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 </head><body>
 <div id="login" class="hide"><form id="lf" class="card lc"><h2>FC Code Trainer</h2><p class="mut">Sign in with your account. Accounts are managed by the admin.</p><input type="text" id="lu" placeholder="Username" autocomplete="username" autocapitalize="off" autocorrect="off"><input type="password" id="lp" placeholder="Password" autocomplete="current-password"><button class="next" id="lgo" type="submit">Log in</button><div class="fb no" id="le"></div></form></div>
@@ -99,10 +116,10 @@ body:not(.in) main{display:none}
 <div class="tabs"><button id="tPlay" class="on">Play</button><button id="tMap">Map</button><button id="tCodes">All codes</button></div>
 
 <section id="play">
- <div class="modes">
-  <button data-m="c2l" class="on">Code → city</button><button data-m="l2c">City → code</button><button data-m="type">Type the city</button>
-  <select id="cf" aria-label="Country filter"></select>
- </div>
+ <div class="chips2"><button data-m="c2l" class="on">Code → city</button><button data-m="l2c">City → code</button><button data-m="type">Type it</button><button data-m="pre">Prefix</button><button data-m="flash">Flashcards</button></div>
+ <div class="chips2"><button data-s="free" class="on">Free play</button><button data-s="daily">Daily 20</button><button data-s="weak">Weakest</button><button data-s="sprint">Sprint 60s</button></div>
+ <select id="cf" aria-label="Country filter"></select>
+ <div id="hud" class="hud"></div>
  <div class="card" id="qcard"></div>
 </section>
 
@@ -110,7 +127,7 @@ body:not(.in) main{display:none}
  <div id="lmap"></div>
  <div class="mtop">
   <div class="mrow"><button id="mx" aria-label="Exit map">✕</button><div class="mcode" id="mc"></div><div class="mscore"><b id="mP">0</b><span>pts</span></div></div>
-  <div class="mrow ms"><span><b id="mR">0</b> rounds</span><span><b id="mD">–</b> avg km</span><span><b id="mM">0</b> mastered</span><span>hit = within 50 km</span></div>
+  <div class="mrow ms"><span><b id="mR">0</b> rounds</span><span><b id="mD">–</b> avg km</span><span><b id="mM">0</b> mastered</span><span>hit = within 50 km · up to 100 pts</span></div>
   <div class="bar" id="mbar" style="margin:6px 0 0;height:8px"></div>
  </div>
  <div class="zb"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zh" aria-label="Reset view">⌂</button></div>
@@ -332,9 +349,9 @@ const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+
 let S={p:{},best:0,tot:0,ok:0,streak:0};
 try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.p)S=Object.assign(S,x)}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-S.m=S.m||{};S.ms=S.ms||{r:0,pts:0,d:0,best:0};
+S.m=S.m||{};S.pr=S.pr||{};S.ms=S.ms||{r:0,pts:0,d:0,best:0,v:2};if(S.ms.v!==2){S.ms.pts=0;S.ms.best=0;S.ms.v=2}
 const cls=c=>S.p[c]?'b'+S.p[c].b:'u';
-let mode='c2l',cf='all',last=null,cur=null,done=false;
+let cf='all';
 
 function stats(){
   const cnt=[0,0,0,0,0,0,0];let seen=0,mast=0;
@@ -346,13 +363,42 @@ function stats(){
   const order=[5,4,3,2,1,0,6];
   $('#bar').innerHTML=order.map((k,i)=>'<i style="width:'+(100*cnt[k]/F.length)+'%;background:'+cols[i]+'"></i>').join('');
 }
-const pool=()=>F.filter(f=>cf==='all'||f.cc===cf);
+let mode='c2l',sess='free',Q=[],qi=0,sc={r:0,w:0},tmr=null,tleft=60,done=false,cur=null,last=null,BS=[];
+const PRE={};F.filter(f=>!f.g).forEach(f=>{const p=f.c.slice(0,3);(PRE[p]=PRE[p]||[]).push(f)});
+const PK=Object.keys(PRE);
+const isPre=()=>mode==='pre',store=()=>isPre()?S.pr:S.p,idOf=it=>isPre()?it:it.c;
+const lvl=it=>{const p=store()[idOf(it)];return p?p.b:-1};
+const miss=it=>{const p=store()[idOf(it)];return p?p.n-p.r:0};
+const items=()=>isPre()?PK.filter(p=>cf==='all'||PRE[p].some(f=>f.cc===cf)):F.filter(f=>cf==='all'||f.cc===cf);
 function pick(){
-  const W=[8,6,4,2,1,.5],p=pool().filter(f=>f.c!==last);
-  const w=p.map(f=>S.p[f.c]?W[S.p[f.c].b]:8);
+  if(sess==='daily'||sess==='weak')return qi<Q.length?Q[qi++]:null;
+  const W=[8,6,4,2,1,.5],p=items().filter(it=>idOf(it)!==last);
+  const w=p.map(it=>{const b=lvl(it);return b<0?8:W[b]});
   let r=Math.random()*w.reduce((a,b)=>a+b,0);
   for(let i=0;i<p.length;i++){r-=w[i];if(r<=0)return p[i]}
   return p[p.length-1];
+}
+function build(){
+  const a=items().map(it=>({it,k:(lvl(it)<0?1.5:lvl(it)===0?0:lvl(it)+1)+Math.random()*.8}));
+  if(sess==='weak'){const seen=a.filter(x=>lvl(x.it)>=0).sort((x,y)=>miss(y.it)-miss(x.it)||lvl(x.it)-lvl(y.it));if(seen.length>=5)return seen.slice(0,20).map(x=>x.it)}
+  return a.sort((x,y)=>x.k-y.k).slice(0,20).map(x=>x.it);
+}
+function start(){
+  clearInterval(tmr);tmr=null;sc={r:0,w:0};last=null;Q=[];qi=0;
+  if(sess==='daily'||sess==='weak')Q=build();
+  if(sess==='sprint'){tleft=60;tmr=setInterval(()=>{tleft--;hud();if(tleft<=0)summary()},1000)}
+  next();
+}
+function hud(){
+  $('#hud').textContent=sess==='sprint'?'\u23f1 '+tleft+'s \u00b7 \u2713 '+sc.r:(sess==='daily'||sess==='weak')?'Question '+Math.min(qi,Q.length)+' of '+Q.length+' \u00b7 \u2713 '+sc.r:'';
+}
+function summary(){
+  clearInterval(tmr);tmr=null;done=true;cur=null;
+  const n=sc.r+sc.w,t={daily:'Daily 20',weak:'Weakest codes',sprint:'Sprint'}[sess]||'Session';
+  $('#qcard').innerHTML='<div class="q">'+t+' finished</div><div class="big">'+sc.r+' / '+n+'</div><div class="mut" style="margin-bottom:12px">'+(n?Math.round(100*sc.r/n):0)+'% correct</div><button class="next" id="again">Go again</button><button class="next" id="fr" style="background:var(--card);color:var(--tx);border-color:var(--bd)">Back to free play</button>';
+  $('#again').onclick=start;
+  $('#fr').onclick=()=>{sess='free';document.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('on',x.dataset.s==='free'));start()};
+  hud();
 }
 function distract(f,n){
   const o=F.filter(x=>x.k!==f.k),same=sh(o.filter(x=>x.cc===f.cc)),diff=sh(o.filter(x=>x.cc!==f.cc));
@@ -364,47 +410,60 @@ const nz=s=>s.toLowerCase().replace(/ß/g,'ss').replace(/ł/g,'l').normalize('NF
 const AL={munich:'munchen',muenchen:'munchen',milan:'milano',cologne:'koln',koeln:'koln',rome:'roma',turin:'torino',seville:'sevilla',nuremberg:'nurnberg',vienna:'vienna',prag:'prague',cagliari:'cagliari'};
 
 function next(){
-  cur=pick();last=cur.c;done=false;const f=cur,q=$('#qcard');
-  if(mode==='type'){
-    q.innerHTML='<div class="q">Which city is this facility in?</div><div class="big">'+f.c+'</div><input type="text" id="ti" autocomplete="off" autocapitalize="off" placeholder="City name"><button class="next" id="go" style="margin-top:0">Check</button><div id="fb"></div>';
-    const ti=$('#ti');ti.focus();
-    const chk=()=>{if(done||!ti.value.trim())return;const v=nz(ti.value),n=AL[v]||v;answer(f.k.split('/').map(nz).includes(n),null)};
-    $('#go').onclick=chk;ti.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done?next():chk()}};
-    return;
-  }
-  let opts,txt,prompt;
-  if(mode==='c2l'){
-    prompt='<div class="q">Where is this facility?</div><div class="big">'+f.c+'</div>';
-    opts=sh([{t:f.city,sub:'',ok:true},...distract(f,3).map(x=>({t:x.city,sub:'',ok:false}))]);
-  }else{
-    prompt='<div class="q">Which code is a facility in…</div><div class="big sm">'+f.k+', '+CN[f.cc]+'?</div>';
-    const ds=distract(f,3).map(x=>({t:x.c,sub:x.city,ok:false}));
-    opts=sh([{t:f.c,sub:f.city,ok:true},...ds]);
-  }
-  q.innerHTML=prompt+'<div class="opts">'+opts.map((o,i)=>'<button data-i="'+i+'"><span>'+o.t+'</span><small></small></button>').join('')+'</div><div id="fb"></div>';
-  const bs=[...q.querySelectorAll('.opts button')];
-  bs.forEach((b,i)=>b.onclick=()=>{
-    if(done)return;
-    bs.forEach((x,j)=>{if(opts[j].ok)x.classList.add('right');if(mode==='l2c')x.querySelector('small').textContent=opts[j].sub});
-    if(!opts[i].ok)b.classList.add('wrong');
-    answer(opts[i].ok,null);
-  });
-  cur._bs=bs;
+  const it=pick();if(!it){summary();return}
+  cur=it;last=idOf(it);done=false;hud();const q=$('#qcard');
+  if(mode==='flash')return flash(it,q);
+  if(mode==='pre')return prefixQ(it,q);
+  if(mode==='type')return typeQ(it,q);
+  const f=it;
+  if(mode==='c2l')choices(q,'<div class="q">Where is this facility?</div><div class="big">'+f.c+'</div>',sh([{t:f.city,ok:1},...distract(f,3).map(x=>({t:x.city}))]),false);
+  else choices(q,'<div class="q">Which code is a facility in\u2026</div><div class="big sm">'+f.k+', '+CN[f.cc]+'?</div>',sh([{t:f.c,sub:f.city,ok:1},...distract(f,3).map(x=>({t:x.c,sub:x.city}))]),true);
 }
-function answer(ok,_){
-  done=true;const f=cur,p=S.p[f.c]||(S.p[f.c]={b:0,n:0,r:0});
-  p.n++;if(ok){p.r++;p.b=Math.min(5,p.b+1);S.ok++;S.streak++;S.best=Math.max(S.best,S.streak)}else{p.b=0;S.streak=0}
-  S.tot++;save();stats();
-  const full=f.c+' · '+f.city+', '+CN[f.cc]+(f.g?' (best guess)':'');
-  $('#fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+(ok?'Correct! ':'Not quite. ')+full+' <span class="mut">(level '+p.b+')</span></div><button class="next" id="nx">Next →</button>';
-  $('#nx').onclick=next;$('#nx').focus();
+function choices(q,prompt,opts,sub){
+  q.innerHTML=prompt+'<div class="opts">'+opts.map(o=>'<button><span>'+o.t+'</span><small></small></button>').join('')+'</div><div id="fb"></div>';
+  BS=[...q.querySelectorAll('.opts button')];
+  BS.forEach((b,i)=>b.onclick=()=>{
+    if(done)return;
+    BS.forEach((x,j)=>{if(opts[j].ok)x.classList.add('right');if(sub)x.querySelector('small').textContent=opts[j].sub});
+    if(!opts[i].ok)b.classList.add('wrong');
+    answer(!!opts[i].ok);
+  });
+}
+function prefixQ(p,q){
+  const g=PRE[p],ks=new Set(g.map(x=>x.k)),c=g[Math.random()*g.length|0],ds=[];
+  sh(F).forEach(x=>{if(ds.length<3&&!ks.has(x.k)){ks.add(x.k);ds.push({t:x.k})}});
+  choices(q,'<div class="q">Which place has codes starting with\u2026</div><div class="big">'+p+'</div>',sh([{t:c.k,ok:1},...ds]),false);
+}
+function typeQ(f,q){
+  q.innerHTML='<div class="q">Which city is this facility in?</div><div class="big">'+f.c+'</div><input type="text" id="ti" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="City name"><button class="next" id="go" style="margin-top:0">Check</button><div id="fb"></div>';
+  const ti=$('#ti');if(sess!=='sprint'||true)ti.focus();
+  const chk=()=>{if(done||!ti.value.trim())return;const v=nz(ti.value),n=AL[v]||v;answer(f.k.split('/').map(nz).includes(n))};
+  $('#go').onclick=chk;ti.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done?next():chk()}};
+}
+function flash(f,q){
+  q.innerHTML='<div class="q">Do you know where this is?</div><div class="big">'+f.c+'</div><div id="rv"></div><button class="next" id="rb" style="margin-top:0">Show answer</button><div id="fb"></div>';
+  $('#rb').onclick=()=>{
+    $('#rv').innerHTML='<div class="fb" style="margin:0 0 12px;font-size:20px">'+f.city+', '+CN[f.cc]+(f.g?' (best guess)':'')+'</div>';
+    $('#rb').classList.add('hide');
+    $('#fb').innerHTML='<div class="two"><button id="no">\u2717 Missed it</button><button id="yes">\u2713 Knew it</button></div>';
+    $('#no').onclick=()=>answer(false);$('#yes').onclick=()=>answer(true);
+  };
+}
+function answer(ok){
+  if(done)return;done=true;
+  const id=idOf(cur),st=store(),p=st[id]||(st[id]={b:0,n:0,r:0});
+  p.n++;if(ok){p.r++;p.b=Math.min(5,p.b+1);S.ok++;S.streak++;S.best=Math.max(S.best,S.streak);sc.r++}else{p.b=0;S.streak=0;sc.w++}
+  S.tot++;save();stats();hud();
+  const g=PRE[id],full=isPre()?id+' \u2192 '+[...new Set(g.map(x=>x.k))].join(', ')+' ('+g.length+' code'+(g.length>1?'s':'')+')':cur.c+' \u00b7 '+cur.city+', '+CN[cur.cc]+(cur.g?' (best guess)':'');
+  $('#fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+(ok?'Correct! ':'Not quite. ')+full+' <span class="mut">(level '+p.b+')</span></div><button class="next" id="nx">Next \u2192</button>';
+  const nx=$('#nx');nx.onclick=next;
+  if(sess==='sprint'&&tmr)setTimeout(()=>{if(tmr&&cur&&idOf(cur)===id)next()},ok?450:1500);
   const ti=$('#ti');if(ti){ti.readOnly=true;$('#go').classList.add('hide')}
 }
 document.addEventListener('keydown',e=>{
-  if($('#play').classList.contains('hide'))return;
-  if(e.target.id==='ti')return;
-  if(done&&e.key==='Enter'){e.preventDefault();next();return}
-  if(!done&&cur&&cur._bs&&/^[1-4]$/.test(e.key))cur._bs[+e.key-1].click();
+  if($('#play').classList.contains('hide')||e.target.id==='ti')return;
+  if(done&&e.key==='Enter'){e.preventDefault();const n=$('#nx');if(n)n.click()}
+  else if(!done&&cur&&/^[1-4]$/.test(e.key)&&BS[+e.key-1])BS[+e.key-1].click();
 });
 
 function list(){
@@ -419,14 +478,15 @@ function tab(t){
   if(t==='codes')list();else if(t==='map')mapStart();else if(!done&&!cur)next();
 }
 $('#tPlay').onclick=()=>tab('play');$('#tCodes').onclick=()=>tab('codes');$('#tMap').onclick=()=>tab('map');
-document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));next()});
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));start()});
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{sess=b.dataset.s;document.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('on',x===b));start()});
 const cc=[...new Set(F.map(f=>f.cc))].sort((a,b)=>CN[a].localeCompare(CN[b]));
 $('#cf').innerHTML='<option value="all">All countries ('+F.length+')</option>'+cc.map(c=>'<option value="'+c+'">'+CN[c]+' ('+F.filter(f=>f.cc===c).length+')</option>').join('');
-$('#cf').onchange=e=>{cf=e.target.value;next()};
+$('#cf').onchange=e=>{cf=e.target.value;start()};
 let armed=false;
 $('#reset').onclick=function(){
   if(!armed){armed=true;this.textContent='Tap again to erase all progress';setTimeout(()=>{armed=false;this.textContent='Reset progress'},4000);return}
-  S={p:{},best:0,tot:0,ok:0,streak:0,m:{},ms:{r:0,pts:0,d:0,best:0}};save();stats();list();mstats();armed=false;this.textContent='Reset progress';
+  S={p:{},best:0,tot:0,ok:0,streak:0,m:{},pr:{},ms:{r:0,pts:0,d:0,best:0,v:2}};save();stats();list();mstats();armed=false;this.textContent='Reset progress';
 };
 const CO={};`BCN1 41.31 2.08;BCN3 41.46 1.96;BCN6 41.46 1.96;BCN8 41.53 2.13;BER8 52.34 13.56;BGY1 45.53 9.84;BLQ1 45.03 11.57;BLQ8 44.55 11;BRE2 52.88 8.23;BRE4 53.02 9.06;BRQ2 49.34 17.31;BTS2 48.28 17.71;BVA1 49.86 2.4;CDE9 52.32 13.68;CDG7 49.21 2.62;CDG8 49.02 2.19;CFR9 45.66 5.12;CGN1 50.35 7.49;DAC2 43.33 -0.31;DAC9 44.9 -0.53;DAO2 49.16 6.16;DAO3 47.66 7.02;DBV1 50.15 10.15;DBW1 49.45 8.57;DBW5 48.04 7.81;DBW6 48.7 8.95;DBW8 47.99 9.09;DBX8 48.61 10.2;DBY2 48.44 10.87;DFV1 45.94 12.73;DHE4 50.26 8.66;DHE6 49.9 8.61;DIF4 48.95 2.46;DIF6 48.95 2.46;DMV3 53.58 13.29;DNC1 50.58 3.14;DNC2 50.39 2.83;DNC3 49.81 3.3;DND1 49.4 1.12;DNM4 53.36 7.16;DNM7 53.53 8.01;DNX5 51.69 8.72;DOQ8 48.21 14.17;DRP2 50.45 7.5;DRP6 49.55 8.35;DRQ1 50.4 2.98;DSG1 39.26 9.08;DSH4 54.35 9.69;DSY1 51.4 12.19;DTH1 51.04 11.03;DTM1 51.65 7.6;DTM2 51.53 7.5;DTM3 51.53 7.5;DTM8 51.33 6.69;DTM9 51.46 7.4;DUS2 51.54 6.59;DUS4 51.15 6.35;DVN1 45.44 11.94;DWP1 43.42 5.39;DWP2 43.78 7.21;ERF1 51.04 11.04;ETZ2 49.06 6.13;FCO1 42.17 12.64;FCO2 41.76 13.01;FCO9 42.14 12.59;FRA1 50.85 9.68;FRA3 50.85 9.73;FRA7 49.49 8.32;FRAX 49.76 8.48;HAJ1 52.28 10.93;HAJ8 52.42 9.57;HAM2 53.33 10.23;KSF7 51.4 9.2;KTW3 50.27 18.69;KTW5 49.94 18.41;LCJ2 51.62 19.36;LCJ3 51.7 19.49;LCJ4 51.7 19.49;LEJ1 51.36 12.45;LEJ3 52.06 11.55;LEJ5 50.95 12.12;LIL1 50.39 3.02;LIL8 50.39 3.02;LIN8 45.49 9.55;LYS1 46.74 4.85;LYS8 45.68 5.1;MAD4 40.45 -3.5;MAD6 40.09 -3.83;MAD7 40.11 -3.85;MAD8 40.28 -3.68;MAD9 40.51 -3.32;MHG9 50.03 9.05;MRS1 44.53 4.74;MRS9 43.62 4.78;MUC3 48.2 10.85;MUC7 48.31 11.88;MXP3 45.29 8.4;MXP5 45.08 9.45;MXP6 45.47 8.57;NUE1 50.35 11.97;NUE9 49.77 11.03;ORY1 47.96 1.85;ORY4 48.6 2.32;OVD1 43.39 -5.77;PAD1 51.84 8.2;PAD2 51.89 9.08;POZ1 52.45 16.71;POZ2 52.22 15.53;PRG2 50.11 14.22;PRG9 49.73 13.33;PSR2 42.05 14.76;RMU1 37.83 -1.1;SCN2 49.44 7.68;SDEV 51.52 9.9;STR1 48.92 8.72;STR2 48.69 10.24;SVQ1 37.27 -5.99;SZZ1 53.34 14.45;TRN1 45.24 7.98;TRN3 44.89 8.7;WRO1 51.04 16.94;WRO2 51.04 16.95;WRO5 51.27 15.79;XCR2 50.31 3.37;XDEQ 49.49 7.68;XDR1 51.17 15.02;XOR1 48.61 2.6;XOR4 49.95 2.22;XPO1 52.57 15.63;ZAZ1 41.63 -1.02;XFRE 45.67 5.12;ONC1 49.93 2.27;OMU1 48.29 10.89;XCD1 48.65 2.55;DAR2 45.88 6.08;DMU5 48.26 11.62;DMU3 48.47 11.96;DMU2 48.14 11.65;DMU1 48.23 11.34;HMU3 48.33 11.69;XOS1 50.34 3.03;CGN9 51.13 6.81;BER3 52.61 12.98;DAP8 46.96 15.44;GXO 51.55 -2.66;BCN2 41.53 2.23;FCO8 42.14 12.58;DBY8 49.97 11.61;XAR1 59.34 16.69;AOI1 43.56 13.3;DVI3 48.16 16.42;LYS2 45.7 5.08;RBCN 41.39 2.17;RBET 49.52 6.1;RDOU 50.43 2.97;RDUIS 51.43 6.76;RHAN 52.37 9.74;RHOF 50.31 11.92;RKTW 50.26 19.02;RLEJ 51.34 12.37;RLIL 50.63 3.06;RMAD 40.42 -3.7;RMAN 49.49 8.47;RMET 49.12 6.18;RNOV 45.45 8.62;RPRG 50.08 14.44;RVEN 45.44 12.32;RVER 45.44 10.99;RWRO 51.11 17.04`.split(';').forEach(s=>{const a=s.split(' ');CO[a[0]]=[+a[1],+a[2]]});
 const px=lo=>(lo+11)*20.1,py=la=>(61-la)*30,W0=784,H0=780;
@@ -500,7 +560,7 @@ function mnext(){
 }
 function mlock(){
  const f=mc;tr=CO[f.c];mdone=true;
- const d=hav(gs,tr),pts=Math.round(5000*Math.exp(-d/400)),hit=d<=50,p=S.m[f.c]||(S.m[f.c]={b:0,n:0,r:0});
+ const d=hav(gs,tr),hit=d<=50,pts=hit?Math.round(100-d):0,p=S.m[f.c]||(S.m[f.c]={b:0,n:0,r:0});
  p.n++;if(hit){p.r++;p.b=Math.min(5,p.b+1)}else p.b=0;
  S.ms.r++;S.ms.pts+=pts;S.ms.d+=d;S.ms.best=Math.max(S.ms.best,pts);save();mstats();
  $('#mfb').innerHTML='<div class="fbc"><div class="fb '+(hit?'ok':'no')+'" style="margin:0">'+(hit?'Hit! ':'Miss. ')+(d<10?d.toFixed(1):Math.round(d))+' km away · +'+pts.toLocaleString()+' points</div><div class="mut">'+f.c+' · '+f.city+', '+CN[f.cc]+(f.g?' (best guess)':'')+' · map level '+p.b+'</div></div>';
@@ -522,6 +582,6 @@ function mstats(){
  $('#mbar').innerHTML=[5,4,3,2,1,0,6].map((k,i)=>'<i style="width:'+(100*cnt[k]/F.length)+'%;background:'+cols[i]+'"></i>').join('');
 }
 $('#who').textContent=window.SES.u;$('#out').onclick=()=>{try{localStorage.removeItem('fcs')}catch(e){}location.reload()};
-stats();next();mstats();
+stats();start();mstats();
 }
 </script></body></html>
