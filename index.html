@@ -102,6 +102,10 @@ button{touch-action:manipulation}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.two button{min-height:56px;font-size:17px}
 #play select{width:100%;margin-bottom:8px;padding:12px}
 @media (max-width:480px){.big{font-size:38px}.stats b{font-size:18px}main{padding:12px 12px 96px}}
+html.mapopen,html.mapopen body{overflow:hidden;overscroll-behavior:none;height:100%;width:100%;position:fixed;inset:0}
+#map:not(.hide){height:100dvh;overscroll-behavior:none;touch-action:none}
+#lmap,.mtop,.mbot,.zb{touch-action:none}
+.mbot select,.mbot button,.mbot label,.zb button,.mtop button{touch-action:manipulation}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 </head><body>
 <div id="login" class="hide"><form id="lf" class="card lc"><h2>FC Code Trainer</h2><p class="mut">Sign in with your account. Accounts are managed by the admin.</p><input type="text" id="lu" placeholder="Username" autocomplete="username" autocapitalize="off" autocorrect="off"><input type="password" id="lp" placeholder="Password" autocomplete="current-password"><button class="next" id="lgo" type="submit">Log in</button><div class="fb no" id="le"></div></form></div>
@@ -473,7 +477,7 @@ function list(){
   document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const f=F.find(x=>x.c===b.dataset.c);if(!f){$('#info').textContent=b.dataset.c+' → location not set yet';return}$('#info').textContent=f.c+' → '+f.city+', '+CN[f.cc]+(f.g?' (best guess)':'')});
 }
 function tab(t){
-  $('#play').classList.toggle('hide',t!=='play');$('#codes').classList.toggle('hide',t!=='codes');$('#map').classList.toggle('hide',t!=='map');$('#sM').closest('.card').classList.toggle('hide',t==='map');$('#tMap').classList.toggle('on',t==='map');
+  $('#play').classList.toggle('hide',t!=='play');$('#codes').classList.toggle('hide',t!=='codes');$('#map').classList.toggle('hide',t!=='map');$('#sM').closest('.card').classList.toggle('hide',t==='map');$('#tMap').classList.toggle('on',t==='map');document.documentElement.classList.toggle('mapopen',t==='map');
   $('#tPlay').classList.toggle('on',t==='play');$('#tCodes').classList.toggle('on',t==='codes');
   if(t==='codes')list();else if(t==='map')mapStart();else if(!done&&!cur)next();
 }
@@ -513,7 +517,7 @@ function initMap(){
  landG=L.layerGroup(LAND.map(s=>L.polygon(s.split(' ').map(p=>{const a=p.split(',');return[+a[1],+a[0]]}),{className:'land',interactive:false})));
  const mk=a=>L.layerGroup(a.map(c=>L.marker([c[1],c[2]],{icon:L.divIcon({className:'lbl',html:'<i></i>'+c[0],iconSize:[0,0]}),interactive:false,keyboard:false})));
  majG=mk(MAJ);minG=mk(MIN);
- map.on('zoomend',lbls);
+ map.on('zoomend',lbls);window.addEventListener('resize',()=>map&&map.invalidateSize());
  map.on('click',e=>{if(!mc||mdone)return;gs=[e.latlng.lat,e.latlng.lng];draw();$('#mg').disabled=false;$('#mg').textContent='Lock in guess'});
  map.fitBounds(EU);
  setBase('s');
