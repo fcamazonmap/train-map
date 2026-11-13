@@ -112,6 +112,28 @@ html.mapopen,html.mapopen body{overflow:hidden;overscroll-behavior:none;height:1
 #map:not(.hide){height:100dvh;overscroll-behavior:none;touch-action:none}
 #lmap,.mtop,.mbot,.zb{touch-action:none}
 .mbot select,.mbot button,.mbot label,.zb button,.mtop button{touch-action:manipulation}
+
+.tabs{display:none}
+main{padding:calc(72px + env(safe-area-inset-top,0px)) 16px 28px}
+section#play .chips2{display:none}
+button.on,.next,.mi.on{color:var(--act,#fff)}
+.tb{position:fixed;top:0;left:0;right:0;z-index:45;min-height:56px;padding:env(safe-area-inset-top,0px) 12px 0;display:flex;align-items:center;gap:10px;background:var(--card);border-bottom:1px solid var(--bd)}
+.tb h1{margin:0;font-size:18px;flex:1}.tb .r{display:flex;gap:8px;align-items:center}
+.tb button{padding:8px 12px;font-size:14px}#mb{font-size:20px;line-height:1;padding:6px 12px}
+html.mapopen .tb{display:none}
+#dim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:110;opacity:0;pointer-events:none;transition:opacity .2s}#dim.on{opacity:1;pointer-events:auto}
+#dr,#sub{position:fixed;top:0;bottom:0;width:min(300px,86vw);background:var(--card);border-right:1px solid var(--bd);z-index:115;transform:translateX(-105%);transition:transform .22s;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+#sub{left:min(300px,86vw);z-index:114}#dr.on,#sub.on{transform:none}
+@media(max-width:700px){#sub{left:0;width:100%;z-index:120}#who{display:none}}
+.mi{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:14px;border-radius:12px;font-size:16px}
+.mh{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:10px 4px 2px}
+.ov{position:fixed;inset:0;z-index:130;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:16px}.ov.on{display:flex}
+.dlg{width:100%;max-width:560px;max-height:92vh;overflow:auto;margin:0}.dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.pr{border:3px solid var(--bd);border-radius:12px;padding:14px 10px;text-align:left;font-weight:700;background:var(--card)}.pr.on{box-shadow:0 0 0 3px var(--ac)}.pr.on::after{content:" ✓"}
+.cr{display:flex;justify-content:space-between;align-items:center;padding:8px 0}.cr input{width:46px;height:34px;border:0;background:none}
+.cmapbox{position:relative;margin:10px 0}#cmap{height:min(48vh,380px);border-radius:12px;overflow:hidden;background:var(--sea)}
+@media(min-width:900px){main{max-width:980px;padding-left:32px;padding-right:32px}.opts{grid-template-columns:1fr 1fr}.big{font-size:56px}#qcard{padding:28px}.chip{font-size:15px;padding:7px 11px}.tb{padding-left:24px;padding-right:24px}}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
 </head><body>
@@ -119,7 +141,12 @@ html.mapopen,html.mapopen body{overflow:hidden;overscroll-behavior:none;height:1
 <div id="pend" class="hide"><div class="card lc"><h2>Almost there</h2><p class="mut" id="pm"></p><button class="next" id="pre">Check again</button><button class="next" id="pout" style="background:var(--card);color:var(--tx);border-color:var(--bd)">Log out</button></div></div>
 <div id="adm" class="hide"><div class="wrap"><div class="hd"><h1>Admin dashboard</h1><button id="adx">Close</button></div><div id="adl"></div></div></div>
 <main>
-<div class="hd"><h1>FC Code Trainer</h1><span class="mut"><span id="who"></span> <button id="adb" class="hide">Admin</button> <button id="out">Log out</button></span></div>
+<header class="tb"><button id="mb" aria-label="Menu">☰</button><h1>FC Code Trainer</h1><span class="r"><span id="who" class="mut"></span><button id="adb" class="hide">Admin</button><button id="out">Log out</button></span></header>
+<div id="dim"></div>
+<nav id="dr" aria-label="Menu"><div class="mh">Menu</div><button class="mi" id="miPlay">Play <span>›</span></button><button class="mi" id="miMap">Map</button><button class="mi" id="miCodes">All codes</button><button class="mi" id="miSet">Settings</button></nav>
+<aside id="sub"><button class="mi" id="sbk">‹ Back</button><div id="sbody"></div></aside>
+<div class="ov" id="st"><div class="card dlg"><div class="dh"><b>Settings</b><button id="stx" aria-label="Close">✕</button></div><div class="mh">Colour theme</div><div class="pg" id="pg"></div><div id="cust" class="hide"><div class="mh">Custom colours</div><div class="cr"><span>Page background</span><input type="color" id="c_bg"></div><div class="cr"><span>Cards</span><input type="color" id="c_card"></div><div class="cr"><span>Text</span><input type="color" id="c_tx"></div><div class="cr"><span>Accent</span><input type="color" id="c_ac"></div></div></div></div>
+<div class="ov" id="cm"><div class="card dlg"><div class="dh"><b id="ct" style="font-size:22px"></b><button id="cmx" aria-label="Close">✕</button></div><div id="cs"></div><div id="cmw"><div class="cmapbox"><div id="cmap"></div><div class="zb"><button id="czi" aria-label="Zoom in">+</button><button id="czo" aria-label="Zoom out">−</button></div></div><div class="mtools"><button data-b="s">Street</button><button data-b="a">Satellite</button><button id="cg">Open in Google Maps</button></div><div id="cat" class="mut" style="font-size:11px;margin-top:6px"></div></div></div></div>
 <div class="card">
  <div class="stats"><div><b id="sM">0</b><span>mastered</span></div><div><b id="sS">0</b><span>seen</span></div><div><b id="sA">–</b><span>accuracy</span></div><div><b id="sK">0</b><span>streak (best <span id="sB">0</span>)</span></div></div>
  <div class="bar" id="bar"></div>
@@ -131,6 +158,7 @@ html.mapopen,html.mapopen body{overflow:hidden;overscroll-behavior:none;height:1
 <section id="play">
  <div class="chips2"><button data-m="c2l" class="on">Code → city</button><button data-m="l2c">City → code</button><button data-m="type">Type it</button><button data-m="pre">Prefix</button><button data-m="flash">Flashcards</button></div>
  <div class="chips2"><button data-s="free" class="on">Free play</button><button data-s="daily">Daily 20</button><button data-s="weak">Weakest</button><button data-s="sprint">Sprint 60s</button></div>
+ <div class="mut" id="cur" style="margin:4px 0 8px"></div>
  <select id="cf" aria-label="Country filter"></select>
  <div id="hud" class="hud"></div>
  <div class="card" id="qcard"></div>
@@ -154,11 +182,37 @@ html.mapopen,html.mapopen body{overflow:hidden;overscroll-behavior:none;height:1
 </section>
 
 <section id="codes" class="hide">
- <div class="info" id="info">Tap a code to reveal its location.</div>
- <div id="list"></div>
+  <div id="list"></div>
  <div style="margin-top:16px"><button id="reset">Reset progress</button></div>
 </section>
 </main>
+<script>
+window.PAL={
+midnight:['Midnight Teal',0,'#eef4f3','#ffffff','#1c2b30','#5d6f74','#d8dee0','#2dd4bf','#0b1f1c'],
+linen:['Soft Linen',0,'#f6f2ea','#fdfcfa','#33302b','#7a756b','#e2dcd1','#6b8f71','#ffffff'],
+mauve:['Mauve Dusk',0,'#f6eef2','#fbf6f8','#3a2a35','#7d6572','#e3cdd7','#c98a9c','#2c1a22'],
+graphite:['Graphite',1,'#1e2127','#2b2f37','#dcdad6','#9a9892','#454a53','#d9a066','#23272e'],
+harbor:['Deep Harbor',0,'#e4eeed','#ffffff','#1c2e33','#5b7176','#cbdbd8','#5eb1a3','#0d2019'],
+amber:['Onyx Amber',1,'#141210','#1c1a17','#e8e3da','#a39d90','#3a352d','#e0a458','#1a1410'],
+forest:['Forest Night',1,'#0f1712','#172019','#dce8df','#93a698','#34402f','#6fbf94','#0d1f16'],
+indigo:['Indigo Dusk',1,'#14152a','#1c1e38','#dcdcf0','#9a9bc0','#3a3d5e','#8b93e8','#14142a'],
+cocoa:['Cocoa Dark',1,'#1a130f','#241b16','#ecdfd4','#a99a8c','#453529','#cb8a5e','#1e140d']};
+window.applyTheme=function(t){
+ const r=document.documentElement;
+ ['--bg','--card','--tx','--mut','--bd','--u','--ac','--act','--sea','--land','--lb'].forEach(v=>r.style.removeProperty(v));r.removeAttribute('data-theme');
+ if(!t||!t.k||t.k==='sys')return;
+ let q=window.PAL[t.k];
+ if(t.k==='custom'){
+  const lum=h=>{const n=parseInt(h.slice(1),16);return(.299*(n>>16)+.587*(n>>8&255)+.114*(n&255))/255};
+  q=['Custom',lum(t.bg)<.5?1:0,t.bg,t.card,t.tx,'color-mix(in srgb,'+t.tx+' 60%,'+t.card+')','color-mix(in srgb,'+t.tx+' 20%,'+t.card+')',t.ac,lum(t.ac)>.6?'#14181a':'#ffffff'];
+ }
+ if(!q)return;
+ r.dataset.theme=q[1]?'dark':'light';
+ const m={'--bg':q[2],'--card':q[3],'--tx':q[4],'--mut':q[5],'--bd':q[6],'--u':q[6],'--ac':q[7],'--act':q[8],'--sea':q[6],'--land':q[3],'--lb':q[5]};
+ for(const k in m)r.style.setProperty(k,m[k]);
+};
+try{applyTheme(JSON.parse(localStorage.getItem('fcth')||'null'))}catch(e){}
+</script>
 <script>
 (function(){
 const SB_URL='https://mhbhrekyxxodctffkjdc.supabase.co';
@@ -274,7 +328,7 @@ async function go(mode){
  if(!email||!pw){er.textContent='Enter your email and password.';return}
  er.textContent='';b.disabled=b2.disabled=true;
  try{
-  const res=mode==='in'?await sb.auth.signInWithPassword({email:email,password:pw}):await sb.auth.signUp({email:email,password:pw});
+  const res=mode==='in'?await sb.auth.signInWithPassword({email:email,password:pw}):await sb.auth.signUp({email:email,password:pw,options:{emailRedirectTo:location.origin+location.pathname}});
   if(res.error){er.textContent=res.error.message}
   else if(res.data&&res.data.session){await boot(res.data.session);return}
   else er.textContent='Account created. Confirm your email if asked, then log in. An admin also has to approve it before you can use the trainer.';
@@ -591,7 +645,7 @@ function list(){
   const by={};F.forEach(f=>(by[f.cc]=by[f.cc]||[]).push(f));
   $('#list').innerHTML=Object.keys(by).sort((a,b)=>CN[a].localeCompare(CN[b])).map(cc=>'<h3>'+CN[cc]+' <span class="mut">('+by[cc].length+')</span></h3><div class="chips">'+by[cc].sort((a,b)=>a.c.localeCompare(b.c)).map(f=>'<button class="chip '+cls(f.c)+'" data-c="'+f.c+'">'+f.c+'</button>').join('')+'</div>').join('');
   $('#list').insertAdjacentHTML('beforeend','<h3>Location not set yet <span class="mut">('+U.length+')</span></h3><div class="chips">'+U.map(c=>'<button class="chip u" data-c="'+c+'">'+c+'</button>').join('')+'</div>');
-  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const f=F.find(x=>x.c===b.dataset.c);if(!f){$('#info').textContent=b.dataset.c+' → location not set yet';return}$('#info').textContent=f.c+' → '+f.city+', '+CN[f.cc]+(f.g?' (best guess)':'')});
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>openCode(b.dataset.c));
 }
 function tab(t){
   $('#play').classList.toggle('hide',t!=='play');$('#codes').classList.toggle('hide',t!=='codes');$('#map').classList.toggle('hide',t!=='map');$('#sM').closest('.card').classList.toggle('hide',t==='map');$('#tMap').classList.toggle('on',t==='map');document.documentElement.classList.toggle('mapopen',t==='map');
@@ -703,6 +757,74 @@ function mstats(){
  $('#mbar').innerHTML=[5,4,3,2,1,0,6].map((k,i)=>'<i style="width:'+(100*cnt[k]/F.length)+'%;background:'+cols[i]+'"></i>').join('');
 }
 $('#who').textContent=window.SES.u;$('#out').onclick=()=>{window.signOut?window.signOut():location.reload()};
+
+/* ---------- menu ---------- */
+const on_=(id,v)=>$(id).classList.toggle('on',v);
+function menu(v){on_('#dr',v);on_('#dim',v);if(!v)on_('#sub',false)}
+function updateCur(){$('#cur').textContent=[...document.querySelectorAll('.chips2 .on')].map(b=>b.textContent).join(' · ')}
+function buildSub(){
+ const grp=(sel,k,t)=>'<div class="mh">'+t+'</div>'+[...document.querySelectorAll(sel)].map(b=>'<button class="mi'+(b.classList.contains('on')?' on':'')+'" data-k="'+k+'" data-v="'+b.dataset[k]+'">'+b.textContent+'</button>').join('');
+ $('#sbody').innerHTML=grp('[data-s]','s','Session')+grp('[data-m]','m','Game mode');
+}
+$('#mb').onclick=()=>menu(!$('#dr').classList.contains('on'));
+$('#dim').onclick=()=>menu(false);
+$('#sbk').onclick=()=>on_('#sub',false);
+$('#miPlay').onclick=()=>{buildSub();on_('#sub',!$('#sub').classList.contains('on'))};
+$('#miMap').onclick=()=>{menu(false);tab('map')};
+$('#miCodes').onclick=()=>{menu(false);tab('codes')};
+$('#miSet').onclick=()=>{menu(false);renderSet();on_('#st',true)};
+$('#sbody').onclick=e=>{
+ const b=e.target.closest('.mi');if(!b)return;
+ document.querySelector('.chips2 [data-'+b.dataset.k+'="'+b.dataset.v+'"]').click();
+ updateCur();menu(false);tab('play');
+};
+/* ---------- settings / theme ---------- */
+function curTheme(){try{return JSON.parse(localStorage.getItem('fcth')||'null')}catch(e){return null}}
+function setT(t){try{localStorage.setItem('fcth',JSON.stringify(t))}catch(e){}applyTheme(t)}
+function renderSet(){
+ const c=curTheme(),k=c&&c.k||'sys';
+ $('#pg').innerHTML='<button class="pr'+(k==='sys'?' on':'')+'" data-k="sys">Default (auto)</button>'+Object.keys(PAL).map(x=>{const q=PAL[x];return '<button class="pr'+(k===x?' on':'')+'" data-k="'+x+'" style="background:'+q[3]+';color:'+q[4]+';border-color:'+q[7]+'">'+q[0]+'</button>'}).join('')+'<button class="pr'+(k==='custom'?' on':'')+'" data-k="custom">Custom</button>';
+ $('#cust').classList.toggle('hide',k!=='custom');
+ if(k==='custom')['bg','card','tx','ac'].forEach(f=>{$('#c_'+f).value=c[f]});
+}
+$('#pg').onclick=e=>{
+ const b=e.target.closest('.pr');if(!b)return;
+ let t={k:b.dataset.k};
+ if(t.k==='custom'){const c=curTheme();t=c&&c.k==='custom'?c:{k:'custom',bg:'#f6f5f1',card:'#ffffff',tx:'#1d1d1b',ac:'#e8890c'}}
+ setT(t);renderSet();
+};
+['bg','card','tx','ac'].forEach(f=>$('#c_'+f).oninput=()=>{const t={k:'custom'};['bg','card','tx','ac'].forEach(x=>t[x]=$('#c_'+x).value);setT(t)});
+$('#stx').onclick=()=>on_('#st',false);
+/* ---------- code details popup ---------- */
+let cmap=null,cl=null,cmk=null,cll=null;
+function cTiles(b){
+ if(cl)cmap.removeLayer(cl);
+ cl=L.tileLayer(TL[b][0],{maxZoom:18,maxNativeZoom:b==='a'?17:19}).addTo(cmap);
+ $('#cat').textContent=TL[b][1];
+ document.querySelectorAll('#cm [data-b]').forEach(x=>x.classList.toggle('on',x.dataset.b===b));
+}
+function openCode(c){
+ const f=F.find(x=>x.c===c),ll=CO[c],p=S.p[c];
+ $('#ct').textContent=c;
+ $('#cs').innerHTML=(f?'<div style="font-size:16px;font-weight:600">'+f.city+', '+CN[f.cc]+'</div><div class="mut">'+(ll?ll[0].toFixed(3)+', '+ll[1].toFixed(3)+' · ':'')+(p?'Level '+p.b+' of 5':'Not practised yet')+(f.g?' · approximate location':'')+'</div>':'<div class="mut">Location not set yet.</div>');
+ $('#cmw').classList.toggle('hide',!(f&&ll));
+ on_('#cm',true);
+ if(!(f&&ll))return;
+ cll=ll;
+ if(!HAS){$('#cmap').innerHTML='<div class="mut" style="padding:16px">The map library could not load. Check your connection and reload.</div>';return}
+ if(!cmap){cmap=L.map('cmap',{zoomControl:false,attributionControl:false,minZoom:3,maxZoom:18,zoomSnap:.5,zoomDelta:.5});cTiles('s')}
+ cmap.setView(ll,9);
+ if(cmk)cmap.removeLayer(cmk);
+ cmk=L.circleMarker(ll,{radius:9,color:'#fff',weight:2,fillColor:'#e8890c',fillOpacity:1,interactive:false}).addTo(cmap);
+ setTimeout(()=>cmap.invalidateSize(),60);
+}
+document.querySelectorAll('#cm [data-b]').forEach(b=>b.onclick=()=>cmap&&cTiles(b.dataset.b));
+$('#czi').onclick=()=>cmap&&cmap.zoomIn();$('#czo').onclick=()=>cmap&&cmap.zoomOut();
+$('#cg').onclick=()=>cll&&window.open('https://www.google.com/maps?q='+cll[0]+','+cll[1],'_blank','noopener');
+$('#cmx').onclick=()=>on_('#cm',false);
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('on')}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){menu(false);on_('#st',false);on_('#cm',false)}});
+updateCur();
 stats();start();mstats();
 }
 };
