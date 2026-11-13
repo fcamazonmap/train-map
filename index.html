@@ -50,6 +50,12 @@ h3{font-size:14px;margin:10px 0 0}.mut{color:var(--mut);font-size:13px}
 body:not(.in) main{display:none}
 #login{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 #login.hide{display:none}
+#pend{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+#pend.hide{display:none}
+#adm{position:fixed;inset:0;z-index:120;background:var(--bg);overflow:auto;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
+#adm.hide{display:none}
+#adm .wrap{max-width:640px;margin:0 auto}
+#adm .card b{word-break:break-all}
 .lc{width:100%;max-width:340px;margin:0}.lc h2{margin:0 0 4px}
 .lc input{font:inherit;width:100%;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);margin:6px 0}
 .lc .next{margin-top:8px}
@@ -110,8 +116,10 @@ html.mapopen,html.mapopen body{overflow:hidden;overscroll-behavior:none;height:1
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
 </head><body>
 <div id="login" class="hide"><form id="lf" class="card lc"><h2>FC Code Trainer</h2><p class="mut">Log in with your email and password.</p><input type="email" id="lu" placeholder="Email" autocomplete="email" autocapitalize="off" autocorrect="off"><input type="password" id="lp" placeholder="Password" autocomplete="current-password"><button class="next" id="lgo" type="submit">Log in</button><button class="next" id="lsu" type="button" style="background:var(--card);color:var(--tx);border-color:var(--bd)">Create account</button><div class="fb no" id="le"></div></form></div>
+<div id="pend" class="hide"><div class="card lc"><h2>Almost there</h2><p class="mut" id="pm"></p><button class="next" id="pre">Check again</button><button class="next" id="pout" style="background:var(--card);color:var(--tx);border-color:var(--bd)">Log out</button></div></div>
+<div id="adm" class="hide"><div class="wrap"><div class="hd"><h1>Admin dashboard</h1><button id="adx">Close</button></div><div id="adl"></div></div></div>
 <main>
-<div class="hd"><h1>FC Code Trainer</h1><span class="mut"><span id="who"></span> <button id="out">Log out</button></span></div>
+<div class="hd"><h1>FC Code Trainer</h1><span class="mut"><span id="who"></span> <button id="adb" class="hide">Admin</button> <button id="out">Log out</button></span></div>
 <div class="card">
  <div class="stats"><div><b id="sM">0</b><span>mastered</span></div><div><b id="sS">0</b><span>seen</span></div><div><b id="sA">–</b><span>accuracy</span></div><div><b id="sK">0</b><span>streak (best <span id="sB">0</span>)</span></div></div>
  <div class="bar" id="bar"></div>
@@ -173,11 +181,10 @@ window.signOut=async()=>{await flush();try{await sb.auth.signOut()}catch(e){}loc
 
 const n=x=>x?((x.tot||0)+((x.ms&&x.ms.r)||0)):-1;
 
-async function boot(session){
- if(booted)return;booted=true;
- const user=session.user,u=user.email||'user';
- uid=user.id;window.SES={u:u,id:uid};
- const KEY='fcp_'+u.toLowerCase();
+let entered=false;
+async function enter(rl){
+ if(entered)return;entered=true;
+ const KEY='fcp_'+window.SES.u.toLowerCase();
  try{
   // one-time carry-over of progress saved under the old username login (only if exactly one old save exists)
   if(!localStorage.getItem(KEY)){
@@ -190,9 +197,76 @@ async function boot(session){
   if(rem&&n(rem)>=n(loc))localStorage.setItem(KEY,JSON.stringify(rem));   // cloud copy is ahead: use it
   else if(loc&&n(loc)>n(rem)){pending=loc;flush()}                          // this device is ahead: upload it
  }catch(e){}
- g('login').classList.add('hide');
+ g('pend').classList.add('hide');
  document.body.classList.add('in');
  window.startApp();
+ if(rl==='admin')initAdmin();
+}
+async function gate(){
+ let p=null;
+ try{const r=await sb.from('profiles').select('role,status').eq('id',uid).maybeSingle();p=r.data}catch(e){}
+ if(p&&p.status==='approved'){await enter(p.role);return}
+ g('pm').textContent=p&&p.status==='rejected'?'Your account request was declined. Contact the admin if you think this is a mistake.':'Your account is waiting for admin approval. Once it is approved you can start training.';
+ g('pend').classList.remove('hide');
+}
+async function boot(session){
+ if(booted)return;booted=true;
+ uid=session.user.id;window.SES={u:session.user.email||'user',id:uid};
+ g('login').classList.add('hide');
+ await gate();
+}
+g('pre').onclick=gate;
+g('pout').onclick=()=>window.signOut();
+
+/* ---------- admin dashboard ---------- */
+const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function pcount(){
+ try{
+  const r=await sb.from('profiles').select('id',{count:'exact',head:true}).eq('status','pending');
+  const c=r.count||0,b=g('adb');
+  b.textContent=c?'Admin ('+c+')':'Admin';
+  b.style.borderColor=b.style.color=c?'var(--ac)':'';
+ }catch(e){}
+}
+async function renderAdmin(){
+ const box=g('adl');
+ box.innerHTML='<p class="mut">Loading…</p>';
+ const res=await Promise.all([
+  sb.from('profiles').select('*').order('created_at',{ascending:false}),
+  sb.from('trainer_state').select('user_id,data,updated_at')
+ ]);
+ const pr=res[0],st=res[1];
+ if(pr.error){box.innerHTML='<p class="fb no">'+esc(pr.error.message)+'</p>';return}
+ const sm={};(st.data||[]).forEach(x=>{sm[x.user_id]=x});
+ const ord={pending:0,approved:1,rejected:2};
+ const rows=pr.data.slice().sort((a,b)=>(ord[a.status]-ord[b.status]));
+ box.innerHTML=rows.map(p=>{
+  const s=sm[p.id],m=s&&s.data&&s.data.p?Object.keys(s.data.p).filter(k=>s.data.p[k].b>=4).length:0;
+  const me=p.id===uid,id=' data-id="'+esc(p.id)+'"';
+  let act='';
+  if(p.status!=='approved')act+='<button data-a="approve"'+id+'>Approve</button>';
+  if(p.status==='pending')act+='<button data-a="reject"'+id+'>Reject</button>';
+  if(p.status==='approved'&&!me){
+   act+='<button data-a="revoke"'+id+'>Revoke access</button>';
+   act+=p.role==='admin'?'<button data-a="user"'+id+'>Make user</button>':'<button data-a="admin"'+id+'>Make admin</button>';
+  }
+  const last=s&&s.updated_at?new Date(s.updated_at).toLocaleString():'never';
+  return '<div class="card"><b>'+esc(p.email)+(me?' (you)':'')+'</b><div class="mut">'+esc(p.role)+' · '+esc(p.status)+' · signed up '+new Date(p.created_at).toLocaleDateString()+'</div><div class="mut">Mastered '+m+' · last progress sync '+esc(last)+'</div><div class="mtools" style="margin-top:8px">'+act+'</div></div>';
+ }).join('')||'<p class="mut">No accounts yet.</p>';
+}
+function initAdmin(){
+ g('adb').classList.remove('hide');
+ g('adb').onclick=()=>{g('adm').classList.remove('hide');renderAdmin()};
+ g('adx').onclick=()=>{g('adm').classList.add('hide');pcount()};
+ g('adl').onclick=async e=>{
+  const b=e.target.closest('button[data-a]');if(!b)return;
+  b.disabled=true;
+  const patch={approve:{status:'approved'},reject:{status:'rejected'},revoke:{status:'rejected'},admin:{role:'admin'},user:{role:'user'}}[b.dataset.a];
+  const r=await sb.from('profiles').update(patch).eq('id',b.dataset.id);
+  if(r.error)alert(r.error.message);
+  await renderAdmin();pcount();
+ };
+ pcount();setInterval(pcount,30000);
 }
 
 async function go(mode){
@@ -203,7 +277,7 @@ async function go(mode){
   const res=mode==='in'?await sb.auth.signInWithPassword({email:email,password:pw}):await sb.auth.signUp({email:email,password:pw});
   if(res.error){er.textContent=res.error.message}
   else if(res.data&&res.data.session){await boot(res.data.session);return}
-  else er.textContent='Check your email to confirm your account, then log in.';
+  else er.textContent='Account created. Confirm your email if asked, then log in. An admin also has to approve it before you can use the trainer.';
  }catch(x){er.textContent='Could not reach the login server. Try again in a moment.'}
  b.disabled=b2.disabled=false;
 }
