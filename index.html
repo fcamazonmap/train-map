@@ -107,8 +107,9 @@ html.mapopen,html.mapopen body{overflow:hidden;overscroll-behavior:none;height:1
 #lmap,.mtop,.mbot,.zb{touch-action:none}
 .mbot select,.mbot button,.mbot label,.zb button,.mtop button{touch-action:manipulation}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
 </head><body>
-<div id="login" class="hide"><form id="lf" class="card lc"><h2>FC Code Trainer</h2><p class="mut">Sign in with your account. Accounts are managed by the admin.</p><input type="text" id="lu" placeholder="Username" autocomplete="username" autocapitalize="off" autocorrect="off"><input type="password" id="lp" placeholder="Password" autocomplete="current-password"><button class="next" id="lgo" type="submit">Log in</button><div class="fb no" id="le"></div></form></div>
+<div id="login" class="hide"><form id="lf" class="card lc"><h2>FC Code Trainer</h2><p class="mut">Log in with your email and password.</p><input type="email" id="lu" placeholder="Email" autocomplete="email" autocapitalize="off" autocorrect="off"><input type="password" id="lp" placeholder="Password" autocomplete="current-password"><button class="next" id="lgo" type="submit">Log in</button><button class="next" id="lsu" type="button" style="background:var(--card);color:var(--tx);border-color:var(--bd)">Create account</button><div class="fb no" id="le"></div></form></div>
 <main>
 <div class="hd"><h1>FC Code Trainer</h1><span class="mut"><span id="who"></span> <button id="out">Log out</button></span></div>
 <div class="card">
@@ -152,27 +153,69 @@ html.mapopen,html.mapopen body{overflow:hidden;overscroll-behavior:none;height:1
 </main>
 <script>
 (function(){
-const API='https://script.google.com/macros/s/AKfycbx9FYt89wWS2FbVsfiAGvlDAQlSicSoLqdh6m2xzpIbWH-UCQUesB6EsqmVUDGmdxwY/exec';
+const SB_URL='https://mhbhrekyxxodctffkjdc.supabase.co';
+const SB_KEY='YOUR_ANON_KEY';         // the anon / publishable key (never the service_role key)
 const g=id=>document.getElementById(id);
-let s=null;try{s=JSON.parse(localStorage.getItem('fcs')||'null')}catch(e){}
-if(s&&s.u&&Date.now()-s.t<7*864e5){window.SES=s;document.body.classList.add('in');return}
-g('login').classList.remove('hide');
-g('lf').onsubmit=async e=>{
- e.preventDefault();
- const u=g('lu').value.trim(),p=g('lp').value,b=g('lgo'),er=g('le');
- if(!u||!p){er.textContent='Enter your username and password.';return}
- er.textContent='';b.disabled=true;b.textContent='Checking…';
+const er=g('le');
+if(!window.supabase||SB_URL.indexOf('YOUR_')===0){er.textContent='Supabase is not set up yet: add your Project URL and anon key at the top of this script.';g('login').classList.remove('hide');return}
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+let uid=null,pending=null,timer=null,booted=false;
+
+async function flush(){
+ if(!pending||!uid)return;
+ const S=pending;pending=null;
+ try{await sb.from('trainer_state').upsert({user_id:uid,data:S,updated_at:new Date().toISOString()})}catch(e){}
+}
+window.pushState=S=>{pending=S;clearTimeout(timer);timer=setTimeout(flush,1500)};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
+window.addEventListener('pagehide',flush);
+window.signOut=async()=>{await flush();try{await sb.auth.signOut()}catch(e){}location.reload()};
+
+const n=x=>x?((x.tot||0)+((x.ms&&x.ms.r)||0)):-1;
+
+async function boot(session){
+ if(booted)return;booted=true;
+ const user=session.user,u=user.email||'user';
+ uid=user.id;window.SES={u:u,id:uid};
+ const KEY='fcp_'+u.toLowerCase();
  try{
-  const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'login',username:u,password:p})});
-  const d=await r.json();
-  if(d&&d.ok){localStorage.setItem('fcs',JSON.stringify({u:d.user||u,t:Date.now()}));location.reload();return}
-  er.textContent=d&&d.error==='inactive'?'This account is inactive. Contact the admin.':'Wrong username or password.';
+  // one-time carry-over of progress saved under the old username login (only if exactly one old save exists)
+  if(!localStorage.getItem(KEY)){
+   const olds=Object.keys(localStorage).filter(k=>k.indexOf('fcp_')===0&&k!==KEY);
+   if(olds.length===1)localStorage.setItem(KEY,localStorage.getItem(olds[0]));
+  }
+  let loc=null;try{loc=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+  const r=await sb.from('trainer_state').select('data').eq('user_id',uid).maybeSingle();
+  const rem=r.data&&r.data.data;
+  if(rem&&n(rem)>=n(loc))localStorage.setItem(KEY,JSON.stringify(rem));   // cloud copy is ahead: use it
+  else if(loc&&n(loc)>n(rem)){pending=loc;flush()}                          // this device is ahead: upload it
+ }catch(e){}
+ g('login').classList.add('hide');
+ document.body.classList.add('in');
+ window.startApp();
+}
+
+async function go(mode){
+ const email=g('lu').value.trim(),pw=g('lp').value,b=g('lgo'),b2=g('lsu');
+ if(!email||!pw){er.textContent='Enter your email and password.';return}
+ er.textContent='';b.disabled=b2.disabled=true;
+ try{
+  const res=mode==='in'?await sb.auth.signInWithPassword({email:email,password:pw}):await sb.auth.signUp({email:email,password:pw});
+  if(res.error){er.textContent=res.error.message}
+  else if(res.data&&res.data.session){await boot(res.data.session);return}
+  else er.textContent='Check your email to confirm your account, then log in.';
  }catch(x){er.textContent='Could not reach the login server. Try again in a moment.'}
- b.disabled=false;b.textContent='Log in';
-};
+ b.disabled=b2.disabled=false;
+}
+g('lf').onsubmit=e=>{e.preventDefault();go('in')};
+g('lsu').onclick=()=>go('up');
+
+sb.auth.getSession().then(r=>{if(r.data&&r.data.session)boot(r.data.session);else g('login').classList.remove('hide')}).catch(()=>g('login').classList.remove('hide'));
+sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'&&booted)location.reload()});
 })();
 </script>
 <script>
+window.startApp=function(){
 if(window.SES){
 const KEY='fcp_'+window.SES.u.toLowerCase();
 try{if(!localStorage.getItem(KEY)&&localStorage.getItem('fcp'))localStorage.setItem(KEY,localStorage.getItem('fcp'))}catch(e){}
@@ -352,7 +395,7 @@ const $=s=>document.querySelector(s);
 const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 let S={p:{},best:0,tot:0,ok:0,streak:0};
 try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.p)S=Object.assign(S,x)}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(window.pushState)window.pushState(S)};
 S.m=S.m||{};S.pr=S.pr||{};S.ms=S.ms||{r:0,pts:0,d:0,best:0,v:2};if(S.ms.v!==2){S.ms.pts=0;S.ms.best=0;S.ms.v=2}
 const cls=c=>S.p[c]?'b'+S.p[c].b:'u';
 let cf='all';
@@ -585,7 +628,8 @@ function mstats(){
  const cols=['var(--b5)','var(--b4)','var(--b3)','var(--b2)','var(--b1)','var(--b0)','var(--u)'];
  $('#mbar').innerHTML=[5,4,3,2,1,0,6].map((k,i)=>'<i style="width:'+(100*cnt[k]/F.length)+'%;background:'+cols[i]+'"></i>').join('');
 }
-$('#who').textContent=window.SES.u;$('#out').onclick=()=>{try{localStorage.removeItem('fcs')}catch(e){}location.reload()};
+$('#who').textContent=window.SES.u;$('#out').onclick=()=>{window.signOut?window.signOut():location.reload()};
 stats();start();mstats();
 }
+};
 </script></body></html>
