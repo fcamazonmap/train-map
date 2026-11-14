@@ -121,10 +121,10 @@ button.on,.next,.mi.on{color:var(--act,#fff)}
 .tb h1{margin:0;font-size:18px;flex:1}.tb .r{display:flex;gap:8px;align-items:center}
 .tb button{padding:8px 12px;font-size:14px}#mb{font-size:20px;line-height:1;padding:6px 12px}
 html.mapopen .tb{display:none}
-#dim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:110;opacity:0;pointer-events:none;transition:opacity .2s}#dim.on{opacity:1;pointer-events:auto}
-#dr,#sub{position:fixed;top:0;bottom:0;width:min(300px,86vw);background:var(--card);border-right:1px solid var(--bd);z-index:115;transform:translateX(-105%);transition:transform .22s;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:6px;overflow-y:auto}
-#sub{left:min(300px,86vw);z-index:114}#dr.on,#sub.on{transform:none}
-@media(max-width:700px){#sub{left:0;width:100%;z-index:120}#who{display:none}}
+#dim{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:110;opacity:0;pointer-events:none;transition:opacity .2s}#dim.on{opacity:1;pointer-events:auto}
+#dr,#sub{position:fixed;top:calc(62px + env(safe-area-inset-top,0px));left:12px;width:240px;max-height:calc(100vh - 84px);background:var(--card);border:1px solid var(--bd);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.35);z-index:115;padding:8px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);transform-origin:top left;transition:opacity .15s,transform .15s,visibility .15s}
+#sub{left:260px;z-index:116}#dr.on,#sub.on{opacity:1;visibility:visible;transform:none}
+@media(max-width:700px){#sub{left:12px;width:calc(100vw - 24px)}#who{display:none}}
 .mi{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:14px;border-radius:12px;font-size:16px}
 .mh{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:10px 4px 2px}
 .ov{position:fixed;inset:0;z-index:130;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:16px}.ov.on{display:flex}
