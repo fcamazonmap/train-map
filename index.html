@@ -142,16 +142,46 @@ button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .tb h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tb .r{flex:none}.tb button{white-space:nowrap}
 .co{max-width:170px;overflow:hidden;text-overflow:ellipsis;font-size:13px!important;opacity:.9}#mco{display:none}
 @media(max-width:700px){.co{display:none}#mco{display:flex}}
+
+.pp{margin:10px 0 0;font-size:12px;color:var(--mut);text-align:center}.pp a{color:var(--mut);text-decoration:underline}
+.ppt h3{font-size:14px;margin:14px 0 4px}.ppt p{margin:0;font-size:13px;line-height:1.5}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+@keyframes pop{40%{transform:scale(1.04)}}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+body{transition:background-color .3s,color .3s}.card,.tb,#dr,#sub{transition:background-color .3s,border-color .3s}
+main>section{animation:fadeIn .3s ease both}
+#qcard>*{animation:fadeUp .28s ease both}#qcard>*:nth-child(2){animation-delay:.05s}#qcard>*:nth-child(3){animation-delay:.1s}#qcard>*:nth-child(4){animation-delay:.15s}
+.opts button.right{animation:pop .35s ease}.opts button.wrong{animation:shake .35s ease}
+.chip{animation:fadeUp .25s ease both}
+#login .card,#pend .card{animation:fadeUp .45s ease both}
+.ov.on{animation:fadeIn .18s ease}.ov.on .dlg{animation:popIn .22s ease}
+button{transition:transform .12s ease,background-color .2s,border-color .2s,opacity .2s}
+button:active{transform:scale(.96)}
+@media(hover:hover){button:hover{transform:translateY(-1px)}button:active{transform:scale(.96)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
 </head><body>
-<div id="login" class="hide"><form id="lf" class="card lc"><h2>FC Code Trainer</h2><p class="mut">Log in with your email and password.</p><input type="email" id="lu" placeholder="Email" autocomplete="email" autocapitalize="off" autocorrect="off"><input type="password" id="lp" placeholder="Password" autocomplete="current-password"><input type="text" id="lc" placeholder="Who do you work for? (needed for new accounts)" autocomplete="organization" maxlength="80"><button class="next" id="lgo" type="submit">Log in</button><button class="next" id="lsu" type="button" style="background:var(--card);color:var(--tx);border-color:var(--bd)">Create account</button><div class="fb no" id="le"></div></form></div>
+<div id="login" class="hide"><form id="lf" class="card lc"><h2>FC Code Trainer</h2><p class="mut">Log in with your email and password.</p><input type="email" id="lu" placeholder="Email" autocomplete="email" autocapitalize="off" autocorrect="off"><input type="password" id="lp" placeholder="Password" autocomplete="current-password"><input type="text" id="lc" placeholder="Who do you work for? (needed for new accounts)" autocomplete="organization" maxlength="80"><button class="next" id="lgo" type="submit">Log in</button><button class="next" id="lsu" type="button" style="background:var(--card);color:var(--tx);border-color:var(--bd)">Create account</button><div class="fb no" id="le"></div><p class="pp">By signing up you accept the <a href="#" id="ppl">privacy policy</a>.</p></form></div>
+<div class="ov" id="pp"><div class="card dlg ppt"><div class="dh"><b>Privacy policy</b><button id="ppx" aria-label="Close">✕</button></div>
+<p class="mut">Last updated: 13 November 2026</p>
+<h3>Who we are</h3><p>FC Code Trainer is a small, independent training tool for learning facility codes, run privately for a group of friends and colleagues. It is not affiliated with, endorsed by or sponsored by Amazon. Contact: fc.amazon.map@gmail.com</p>
+<h3>What we collect</h3><p>Your email address and password (the password is stored only as a secure hash by our login provider, so nobody can read it), the company name you enter, your training progress (answers, levels, streaks), and your account status. On your own device we also keep your colour theme, a copy of your progress and your login session.</p>
+<h3>Why we use it</h3><p>To create and protect your account, to let the administrator approve who can use the app, to save your progress across devices, and to alert the administrator when someone signs up. We rely on the performance of the service you asked for and on our legitimate interest in running it securely (GDPR Art. 6(1)(b) and (f)).</p>
+<h3>Who else handles your data</h3><p>Supabase (database and login), GitHub Pages (website hosting), Resend (sends the administrator an email with your email address and company when you sign up), and map tile providers such as OpenStreetMap when you open a map (they can see your IP address). We do not sell your data, show ads or use analytics or tracking cookies.</p>
+<h3>Who can see it</h3><p>The administrator can see your email, company, account status and progress. Other users cannot.</p>
+<h3>How long we keep it</h3><p>While your account exists. We delete it when you ask us to, or if the service is closed.</p>
+<h3>Your rights</h3><p>You can ask to access, correct, delete, restrict or export your data, or object to its use, by emailing us. You can change your company name at any time in the app. You also have the right to complain to the Romanian data protection authority (ANSPDCP, dataprotection.ro).</p>
+<h3>Security and children</h3><p>Data travels over encrypted connections and is protected by access rules in the database. No system is perfectly secure. The app is not meant for people under 16.</p>
+<h3>Changes</h3><p>If this policy changes, the date above changes with it.</p></div></div>
 <div id="pend" class="hide"><div class="card lc"><h2>Almost there</h2><p class="mut" id="pm"></p><button class="next" id="pre">Check again</button><button class="next" id="pout" style="background:var(--card);color:var(--tx);border-color:var(--bd)">Log out</button></div></div>
 <div id="adm" class="hide"><div class="wrap"><div class="hd"><h1>Admin dashboard</h1><button id="adx">Close</button></div><div id="adl"></div></div></div>
 <main>
 <header class="tb"><button id="mb" aria-label="Menu">☰</button><h1>FC Code Trainer</h1><span class="r"><span id="who" class="mut"></span><button id="co" class="co" title="Change your company"></button><button id="adb" class="hide">Admin</button><button id="out">Log out</button></span></header>
 <div id="dim"></div>
-<nav id="dr" aria-label="Menu"><div class="mh">Menu</div><button class="mi" id="miPlay">Play <span>›</span></button><button class="mi" id="miMap">Map</button><button class="mi" id="miCodes">All codes</button><button class="mi" id="miSet">Settings</button><button class="mi" id="mco"></button></nav>
+<nav id="dr" aria-label="Menu"><div class="mh">Menu</div><button class="mi" id="miPlay">Play <span>›</span></button><button class="mi" id="miMap">Map</button><button class="mi" id="miCodes">All codes</button><button class="mi" id="miSet">Settings</button><button class="mi" id="mco"></button><button class="mi" id="mpp">Privacy policy</button></nav>
 <aside id="sub"><button class="mi" id="sbk">‹ Back</button><div id="sbody"></div></aside>
 <div class="ov" id="cod"><div class="card dlg" style="max-width:380px"><div class="dh"><b>Who do you work for?</b><button id="cox" aria-label="Close">✕</button></div><input type="text" id="coi" maxlength="80" placeholder="Company name"><div id="coe" class="fb no" style="margin:6px 0"></div><button class="next" id="cos">Save</button></div></div>
 <div class="ov" id="st"><div class="card dlg"><div class="dh"><b>Settings</b><button id="stx" aria-label="Close">✕</button></div><div class="mh">Colour theme</div><div class="pg" id="pg"></div><div id="cust" class="hide"><div class="mh">Custom colours</div><div class="cr"><span>Page background</span><input type="color" id="c_bg"></div><div class="cr"><span>Cards</span><input type="color" id="c_card"></div><div class="cr"><span>Text</span><input type="color" id="c_tx"></div><div class="cr"><span>Accent</span><input type="color" id="c_ac"></div></div></div></div>
@@ -244,6 +274,10 @@ window.signOut=async()=>{await flush();try{await sb.auth.signOut()}catch(e){}loc
 
 const n=x=>x?((x.tot||0)+((x.ms&&x.ms.r)||0)):-1;
 
+const ppOpen=e=>{if(e)e.preventDefault();g('dr').classList.remove('on');g('dim').classList.remove('on');g('pp').classList.add('on')};
+g('ppl').onclick=ppOpen;g('mpp').onclick=ppOpen;
+g('ppx').onclick=()=>g('pp').classList.remove('on');
+g('pp').addEventListener('click',e=>{if(e.target===g('pp'))g('pp').classList.remove('on')});
 let company='';
 function setCo(v){company=v||'';const t=company||'Add company';g('co').textContent=t;g('mco').textContent='Company: '+t}
 function openCo(){g('dr').classList.remove('on');g('dim').classList.remove('on');g('coi').value=company;g('cod').classList.add('on');g('coi').focus()}
